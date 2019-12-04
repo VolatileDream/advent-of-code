@@ -77,7 +77,8 @@ def distance_to_points(p1, start):
   distance_dict = {}
   distance = 0
   for p in path_to_points(p1, start):
-    distance_dict[p] = distance
+    if p not in distance_dict:
+      distance_dict[p] = distance
     distance += 1
   return distance_dict
 

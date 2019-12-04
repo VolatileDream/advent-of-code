@@ -44,8 +44,9 @@ if __name__ == "__main__":
 
   args = parser.parse_args(sys.argv[1:])
   ctx = load(args.input)
-  for x in range(len(ctx)):
-    for y in range(len(ctx)):
+  for x in range(100):
+    for y in range(100):
       out = run(list(ctx), x, y)
-      print(x, y, out)
+      if out == 19690720:
+        print(x, y)
 

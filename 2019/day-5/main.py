@@ -74,12 +74,14 @@ def load(f):
 
 
 def run(ctx, continue_fn):
+  instr = 0
   idx = 0
   while continue_fn():
     idx = exec(ctx, idx)
+    instr += 1
     if idx < 0:
       break
-  return ctx
+  return (ctx, instr)
 
 
 if __name__ == "__main__":
@@ -102,7 +104,9 @@ if __name__ == "__main__":
   for line in args.input:
     contents = line.split(',')
     ctx = [ int(x) for x in contents ]
-    res = run(ctx, stepfn) 
+    mem, instrcnt = run(ctx, stepfn) 
     print("---")
-    print(res)
+    print("ran %s instructions" % instrcnt)
+    print("---")
+    print(mem)
 

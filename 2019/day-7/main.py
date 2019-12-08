@@ -85,13 +85,6 @@ def run(ctx, continue_fn, io_in, io_out):
   return (ctx, instr)
 
 
-def read():
-  return input("> ")
-
-def io_out(p):
-  print(p)
-
-
 def p1_main(args, stepfn):
   for line in args.input:
     contents = line.split(',')
@@ -115,11 +108,35 @@ def p1_main(args, stepfn):
     print("---")
     print(maximum, max_phase)
 
+def p2_main(args, stepfn):
+  """main for part 2
+
+  instead of doing this inprocess, use the operating system to handle the io funnyness.
+  """
+  start_io = [ int(x) for x in args.start_io.split(',') ]
+  def io_in():
+    if len(start_io) > 0:
+      return start_io.pop(0)
+    return int(input(""))
+
+  def io_out(p):
+    print(p)
+
+  for line in args.input:
+    contents = line.split(',')
+    ctx = [ int(x) for x in contents ]
+
+    mem, instrs = run(ctx, stepfn, io_in, io_out)
+ 
+  pass
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument('input', type=argparse.FileType('r'), nargs='?', default=sys.stdin)
   parser.add_argument('--steps', default=None, type=int)
+  # --start-io allows us to specify things outside of the io loop.
+  parser.add_argument('--start-io', default=None)
 
   args = parser.parse_args(sys.argv[1:])
 
@@ -133,4 +150,4 @@ if __name__ == "__main__":
   if args.steps is not None:
     stepfn = for_count
 
-  p1_main(args, stepfn)
+  p2_main(args, stepfn)

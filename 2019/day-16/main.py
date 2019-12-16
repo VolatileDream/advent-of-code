@@ -30,15 +30,20 @@ def repeated(c, iterable):
     for _ in range(c):
       yield x
 
-def val(x):
-  return abs(x) % 10
+def m(x, y):
+  if x == 0:
+    return 0
+  elif x == 1:
+    return y
+  elif x == -1:
+    return -y
 
 PROGRESS = "---///|||\\\\\\"
 
 def FFT(phase, sequence):
   for i in range(phase):
     sequence = FFT2(i, sequence)
-    print("..", end="", flush=True)
+    print("\x08..", end="", flush=True)
   print()
   return "".join(map(str, sequence))
 
@@ -50,7 +55,7 @@ def FFT2(phase, sequence):
     l = skip(1, itertools.cycle(repeated(pos + 1, base)))
     s = 0
     for x, y in zip(l, sequence):
-      s += x * y
+      s += m(x, y)
     out.append(abs(s) % 10)
     print("\x08" + PROGRESS[pos % len(PROGRESS)], end="", flush=True)
   return out

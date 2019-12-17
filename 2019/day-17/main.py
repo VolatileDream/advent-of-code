@@ -174,16 +174,39 @@ class RepairDroid(object):
     self.world = world
     self.x = 0
     self.y = 0
+    # index for read
+    self.r = -1
+    self.last = 0
 
   def run(self):
     self.brain.run()
 
   def read(self):
-    # Send the droid a command.
-    # Attempt a move in the direction we're currently storing.
-    raise Exception("no read")
+    """
+  L,10,L,12,R,6, -> A
+  R,10,L,4,L,4,L,12, -> B
+  L,10,L,12,R,6, -> A
+  R,10,L,4,L,4,L,12, -> B
+  L,10,L,12,R,6, -> A
+  L,10,R,10,R,6,L,4, -> C
+  R,10,L,4,L,4,L,12, -> B
+  L,10,R,10,R,6,L,4, -> C
+  L,10,L,12,R,6, -> A
+  L,10,R,10,R,6,L,4, -> C
+  """
+    data = """A,B,A,B,A,C,B,C,A,C
+L,10,L,12,R,6
+R,10,L,4,L,4,L,12
+L,10,R,10,R,6,L,4
+n
+"""
+    self.r += 1
+    return ord(data[self.r])
 
   def write(self, val):
+    self.last = val
+    print(chr(val), end="")
+    return
     if val != 10:
       self.world[(self.x, self.y)] = chr(val)
       self.x += 1
@@ -198,29 +221,7 @@ def load(f):
     contents.extend(line.split(','))
   return [ int(i) for i in contents ]
 
-
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument('program', type=argparse.FileType('r'), nargs='?', default=sys.stdin)
-
-  args = parser.parse_args(sys.argv[1:])
-
-  w = Grid()
-  droid = RepairDroid(args.program, w)
-  # Map out the whole station.
-  try:
-    droid.run()
-  except Exception as e:
-    print(e)
-  except KeyboardInterrupt:
-    pass
-
-  print(w)
-  print("---")
-  print()
-
-  # Find all the intersection points
-
+def intersections(w):
   intersections = []
   mx, my = w.dimensions()
   for y in range(my):
@@ -242,3 +243,54 @@ if __name__ == "__main__":
     print()
 
   print("sum of intersection squares", sum([x * y for x,y in intersections]))
+
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument('program', type=argparse.FileType('r'), nargs='?', default=sys.stdin)
+
+  args = parser.parse_args(sys.argv[1:])
+
+  w = Grid()
+  droid = RepairDroid(args.program, w)
+  # Map out the whole station.
+  try:
+    droid.run()
+    print()
+    print("dust", droid.last)
+  except Exception as e:
+    print(e)
+  except KeyboardInterrupt:
+    pass
+
+  # Solve the maze by hand, compress later.
+  # Starting facing up.
+
+  """
+  L,10,L,12,R,6,R,10,L,4,L,4,L,12,
+  L,10,L,12,R,6,R,10,L,4,L,4,L,12,
+  L,10,L,12,R,6,
+  L,10,R,10,R,6,L,4,
+       R,10,L,4,L,4,L,12,
+  L,10,R,10,R,6,L,4,
+  L,10,L,12,R,6,
+  L,10,R,10,R,6,L4
+  """
+
+  """
+  L,10,L,12,R,6,
+        R,10,L,4,L,4,L,12,
+  L,10,L,12,R,6,
+        R,10,L,4,L,4,L,12,
+  L,10,L,12,R,6,
+  L,10,R,10,R,6,L,4,
+        R,10,L,4,L,4,L,12,
+  L,10 R,10,R,6,L,4,
+  L,10,L,12,R,6,
+  L,10,R,10,R,6,L4
+  """
+  #print(w)
+  #print("---")
+  #print()
+
+  # Find all the intersection points
+  #intersections(w)

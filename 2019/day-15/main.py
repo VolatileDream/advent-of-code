@@ -287,5 +287,7 @@ if __name__ == "__main__":
   print("distance:", distances[oxygen], distances[(0,0)])
   # Do part 2. whatever that is.
 
-  
+  # Since we have all distances, find the longest.
+  farthest = max(distances.values())
 
+  print("farthest", farthest)

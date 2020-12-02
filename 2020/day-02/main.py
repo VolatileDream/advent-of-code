@@ -29,33 +29,31 @@ def load_file(filename):
   return contents
 
 
-def part1(policies):
+def part1_valid(p):
+  c = p.password.count(p.character)
+  return p.start <= c and c <= p.end
+
+
+def part2_valid(p):
+  # policy is 1 indexed, python is zero indexed.
+  first = p.password[p.start - 1]
+  second= p.password[p.end - 1]
+  # Xor
+  return (first == p.character) ^ (second == p.character)
+
+
+def count_valid(policies, validator):
   count = 0
   for p in policies:
-    c = p.password.count(p.character)
-    valid = p.start <= c and c <= p.end
-    if valid:
+    if validator(p):
       count += 1
-
-  print("part 1 valid:", count)
-
-
-def part2(policies):
-  count = 0
-  for p in policies:
-    first = p.password[p.start - 1]
-    second= p.password[p.end - 1]
-    # Xor
-    if (first == p.character) ^ (second == p.character):
-      count += 1
-
-  print("part 2 valid:", count)
+  return count
 
 
 def main(filename):
   policies = load_file(filename)
-  part1(policies)
-  part2(policies)
+  print("part 1:", count_valid(policies, part1_valid))
+  print("part 2:", count_valid(policies, part2_valid))
 
 
 if __name__ == "__main__":

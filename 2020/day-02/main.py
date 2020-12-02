@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import re
 import sys
 import typing
 
@@ -10,20 +11,20 @@ class PasswordPolicy(typing.NamedTuple):
   character: str
   password: str
 
+  extractor = re.compile("(\d+)-(\d+) (.): (.+)")
+
   @staticmethod
   def from_string(string):
-    string = string.strip()
-    r, password = string.split(":")
-    range, character = r.strip().split(" ")
-    start, end = range.strip().split("-")
-
-    return PasswordPolicy(int(start), int(end), character.strip(), password.strip())
+    match = PasswordPolicy.extractor.fullmatch(string)
+    start, end, character, password = match.groups()
+    return PasswordPolicy(int(start), int(end), character, password)
 
 
 def load_file(filename):
   contents = []
   with open(filename, 'r') as f:
     for line in f:
+      line = line.strip() # remove trailing newline
       contents.append(PasswordPolicy.from_string(line))
   return contents
 

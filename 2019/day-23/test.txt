@@ -1,0 +1,11 @@
+# Load our index into memory location 0
+3, 0
+
+# echo our index out to 255
+104, 255
+4, 0
+104, 2
+
+# Exit
+99
+

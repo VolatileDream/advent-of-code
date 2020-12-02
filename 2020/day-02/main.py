@@ -19,37 +19,43 @@ class PasswordPolicy(typing.NamedTuple):
 
     return PasswordPolicy(int(start), int(end), character.strip(), password.strip())
 
-  def valid(self):
-    c = self.password.count(self.character)
-    return self.start <= c and c <= self.end
-
-#  def __repr__(self):
-#    return "{start}-{end} {character}: {password}".format_map(self)
-
 
 def load_file(filename):
   contents = []
   with open(filename, 'r') as f:
     for line in f:
       contents.append(PasswordPolicy.from_string(line))
-      print(contents[-1], contents[-1].valid())
   return contents
 
 
 def part1(policies):
-  valid = 0
+  count = 0
   for p in policies:
-    if p.valid():
-      valid += 1
+    c = p.password.count(p.character)
+    valid = p.start <= c and c <= p.end
+    if valid:
+      count += 1
 
-  print("valid:", valid)
+  print("part 1 valid:", count)
+
 
 def part2(policies):
-  pass
+  count = 0
+  for p in policies:
+    first = p.password[p.start - 1]
+    second= p.password[p.end - 1]
+    # Xor
+    if (first == p.character) ^ (second == p.character):
+      count += 1
+
+  print("part 2 valid:", count)
+
 
 def main(filename):
   policies = load_file(filename)
   part1(policies)
+  part2(policies)
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()

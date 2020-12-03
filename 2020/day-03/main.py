@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import math
 import sys
 
 
@@ -22,8 +23,6 @@ def traversal(landscape, movement_gen):
       y += 1
     elif move == "right":
       x += 1
-    elif move == "left":
-      x -= 1
     elif move == "check":
       line = landscape[y]
       pos = x % len(line)
@@ -33,19 +32,18 @@ def traversal(landscape, movement_gen):
       return
 
 
-
-def part1_move():
+def move(right, down):
   while True:
-    yield "right"
-    yield "right"
-    yield "right"
-    yield "down"
+    for _ in range(right):
+      yield "right"
+    for _ in range(down):
+      yield "down"
     yield "check"
 
 
-def count_trees(traversal):
+def count_trees(landscape, move):
   trees = 0
-  for t in traversal:
+  for t in traversal(landscape, move):
     if t == "#":
       trees += 1
   return trees
@@ -53,8 +51,11 @@ def count_trees(traversal):
 
 def main(filename):
   landscape = load_file(filename)
-  print("part 1:", count_trees(traversal(landscape, part1_move())))
-  print("part 2:", count_trees(traversal(landscape, part1_move())))
+  print("part 1:", count_trees(landscape, move(3, 1)))
+
+  p2_moves = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)]
+  p2_counts = [count_trees(landscape, move(r,d)) for r, d in p2_moves]
+  print("part 2:", math.prod(p2_counts))
 
 
 if __name__ == "__main__":

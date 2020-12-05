@@ -43,8 +43,8 @@ class BinaryBoarding:
     return (row, col)
 
   def seat_id(self):
-    (row, col) = self.position()
-    return row * 8 + col
+    pos = BinaryBoarding.__bin__(self.s, lambda c: c == 'B' or c == 'R')
+    return pos
 
 
 def part1(passes):
@@ -53,20 +53,23 @@ def part1(passes):
 
 
 def part2(passes):
+  # this gives us the range of seats to expect.
+  # our seat isn't the first, nor the last.
   start, end = part1(passes)
   missing = set(range(start, end + 1))
   for p in passes:
     missing.remove(p.seat_id())
 
+  # We expect that this is the case.
   if len(missing) == 1:
     return missing.pop()
 
+  # just in case defensive programming.
   for c in missing:
     if (c - 1) in missing and (c + 1) in missing:
       return c
 
-  print("Could not find seat!")
-  return None
+  return -1
 
 
 def main(filename):

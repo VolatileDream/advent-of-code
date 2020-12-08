@@ -64,6 +64,8 @@ def holds(bag_rules, bag):
       if r not in seen:
         lookup.append(r)
 
+  # gets added to avoid hitting it twice, but makes no sense in the output.
+  seen.remove(bag)
   return seen
 
 
@@ -79,7 +81,6 @@ def total_bags(bag_rules, bag):
 
 def part1(things):
   seen = holds(things, "shiny gold")
-  seen.remove("shiny gold")
   return len(seen)
 
 

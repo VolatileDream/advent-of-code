@@ -100,8 +100,9 @@ def find_funny_jmp_nop(things):
   
 
 def part2(things):
-  def get_jmp_nop_modified_vm(vm, index):
+  def create_modified_vm(vm, index):
     instr, delta = things.instructions[index]
+    # swap the instruction type.
     if instr == "nop":
       instr = "jmp"
     else:
@@ -117,12 +118,12 @@ def part2(things):
   # hopefully we find it before the termination
   while len(modifications) > 0:
     modify_index = modifications.pop()
-    vm = get_jmp_nop_modified_vm(things, modify_index)
+    vm = create_modified_vm(things, modify_index)
     run_to_loop(vm)
 
     if vm.terminated():
       # yay!
-      return vm.acc
+      return "index: {}, acc: {}".format(modify_index, vm.acc)
 
   return -1
 

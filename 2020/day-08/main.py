@@ -72,12 +72,10 @@ class VM:
 
 def run_to_loop(things):
   seen = set()
-  acc = 0
 
   while things.pc not in seen:
     seen.add(things.pc)
     things.exec(1)
-    acc = things.acc
 
   return things
 
@@ -86,14 +84,27 @@ def part1(things):
   return run_to_loop(things).acc
 
 
+def instruction_index(vm):
+  d = collections.defaultdict(set)
+
+  for i in range(len(vm.instructions)):
+    instr, delta = vm.instructions[i]
+    d[instr].add(i)
+
+  return d
+
+
 def find_funny_jmp_nop(things):
   test_instr = set()
-  for i in range(len(things.instructions)):
+  index = instruction_index(things)
+
+  test_instr.update(index["jmp"]) # all jmp are ok.
+
+  # filter nops
+  for i in index["nop"]:
     instr, delta = things.instructions[i]
     # For nop check that it won't self loop.
-    if instr == "nop" and delta != 0:
-      test_instr.add(i)
-    elif instr == "jmp":
+    if delta != 0:
       test_instr.add(i)
 
   return test_instr

@@ -62,7 +62,7 @@ def do(things, preamble):
 
       # check.
       if not q.contains_sum(n):
-        return "missing: {} at index: {}".format(n, index)
+        return (n, index)
 
       q.add(n)
     
@@ -75,11 +75,35 @@ def do(things, preamble):
 
 
 def part1(things, preamble):
-  return do(things, preamble)
+  return "missing: {} at index: {}".format(*do(things, preamble))
+
+
+def find_subset_sum(items, target):
+  # This isn't the "real" subset sum, this is contiguous subset sum.
+  start = 0
+  end = start + 1
+
+  # `start < end` as an invariant.
+  while start < len(items):
+    s = sum(items[start:end])
+    if s == target:
+      return items[start:end]
+    elif s < target and end + 1 < len(items):
+      end += 1
+    else:
+      # either s > target, or end + 1 is the end
+      start += 1
+      end = start + 1
+
+  return None
 
 
 def part2(things, preamble):
-  pass
+  item, index = do(things, preamble)
+
+  subset = find_subset_sum(things[:index], item)
+  subset.sort()
+  return subset[0] + subset[-1]
 
 
 def main(filename, preamble):

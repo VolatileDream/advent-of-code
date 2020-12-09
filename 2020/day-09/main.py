@@ -25,11 +25,9 @@ class Q:
   def add(self, item):
     self.storage.append(item)
     self.mset[item] += 1
-    #print("add", item)
 
     if len(self.storage) > self.size:
       remove = self.storage.pop(0)
-      #print("remove", remove)
       self.mset[remove] -= 1
 
   def contains_sum(self, value):
@@ -103,7 +101,7 @@ def part2(things, preamble):
 
   subset = find_subset_sum(things[:index], item)
   subset.sort()
-  return subset[0] + subset[-1]
+  return (subset, subset[0] + subset[-1])
 
 
 def main(filename, preamble):

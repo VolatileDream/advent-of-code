@@ -38,35 +38,7 @@ def part1(things):
     out[d] += 1
   return out[1] * out[3]
 
-
-def within(x, y, max_delta):
-  return abs(x - y) <= max_delta
-
-
-def valids(jolts):
-  # For each item count the number of valid preceeding items
-  # Note: it can be at most 3, eg: 1 2 3 4 -> 4 has 3 options.
-
-  jolts_with_ends = list(jolts)
-  jolts_with_ends.insert(0, 0)
-  jolts_with_ends.append(machine_rating(jolts))
-
-  options = []
-  for i in range(1, len(jolts_with_ends)):
-    bottom = max(0, i - 3) # catch early items
-
-    valid = 0
-    item = jolts_with_ends[i]
-
-    for j in range(bottom, i):
-      if within(jolts_with_ends[j], item, 3):
-        valid += 1
-
-    options.append(valid)
-
-  return options
-        
-      
+ 
 def product(l):
   p = 1
   for i in l:
@@ -76,9 +48,9 @@ def product(l):
 
 def split_on_delta(jolts):
   out = []
-  acc = [0]
-  prev = 0
-  for i in jolts:
+  acc = [jolts[0]]
+  prev = jolts[0]
+  for i in jolts[1:]:
     acc.append(i)
     if abs(i - prev) == 3:
       out.append(acc)
@@ -93,7 +65,6 @@ def split_on_delta(jolts):
 
 def bfs_paths(current, adjacent, end):
   # breadth first search for possible paths from the start of the array to the end.
-
   if current == end:
     return 1
 
@@ -105,7 +76,6 @@ def bfs_paths(current, adjacent, end):
 
 
 def compute_paths(jolts):
-  #print(jolts)
   if len(jolts) < 3:
     # impossible to have more than 1 path
     return 1
@@ -115,12 +85,10 @@ def compute_paths(jolts):
   adjacency = collections.defaultdict(set)
   jolts_set = set(jolts)
   for p in jolts:
-    #print("range", p, list(range(p + 1, p + 4)))
     for i in range(p + 1, p + 4):
       if i in jolts_set:
         adjacency[p].add(i)
 
-  #print(first, "->", end, ":", adjacency.items())
   return bfs_paths(first, adjacency, end)
 
 
@@ -131,17 +99,17 @@ def count_paths(jolts):
   # there are some spots where we _have_ to have a 3 delta.
   # We want to break up the problem into segments and then rejoin
   # based on these required delta=3 parts.
+  #
+  # if we don't this approach takes forever.
   subseqs = split_on_delta(jolts)
   counts = [compute_paths(s) for s in subseqs]
   return product(counts)
 
+
 def part2(things):
   # for part two we want to append the machine to the end.
+  things.insert(0, 0)
   things.append(machine_rating(things))
-  #print(split_on_delta(things))
-  #print(things)
-  #print(deltas(things))
-  print(product(valids(things)))
   return count_paths(things)
 
 

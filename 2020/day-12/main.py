@@ -95,9 +95,8 @@ def part2(things):
   rotations = ['L', 'R']
   directions = ['N', 'E', 'S', 'W']
 
-  print("ship:", ns, ew, "waypoint:", w_ns, w_ew)
+  #print("ship:", ns, ew, "waypoint:", w_ns, w_ew)
   for item in things:
-    print("instr", item)
     instr = item[0]
     amount = int(item[1:])
 
@@ -112,7 +111,8 @@ def part2(things):
       assert instr == 'F'
       ns = ns + w_ns * amount
       ew = ew + w_ew * amount
-    print("ship:", ns, ew, "waypoint:", w_ns, w_ew)
+    #print("instr", item)
+    #print("ship:", ns, ew, "waypoint:", w_ns, w_ew)
 
   return abs(ns) + abs(ew)
   pass

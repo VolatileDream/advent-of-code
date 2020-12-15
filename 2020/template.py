@@ -50,7 +50,7 @@ def main(filename):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('input', nargs='?', default='-')
+  parser.add_argument('input', nargs='?', default='/dev/stdin')
 
   args = parser.parse_args(sys.argv[1:])
   main(args.input)

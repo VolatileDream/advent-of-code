@@ -144,35 +144,17 @@ class ConwayND:
 
   def step(self, adj_func):
     updated = ConwayND(self.clz)
-    u = self.min.get_unit()
 
-    updates = set(self.grid)
-    # also add all the adjacent items in the set.
+    # Count the number of alive items beside every point
+    alive = collections.defaultdict(int)
     for p in self.grid:
+      alive[p] += 1
       for a in adj_func(p):
-        updates.add(a)
+        alive[a] += 1
 
-    u = self.min.get_unit()
-    print("items", len(self.grid),
-          "updating", len(updates),
-          "instead of", Coordinate.range_distance(self.min - u, self.max + u))
-    spread = u + u + self.max - self.min
-    print("spread", product(spread), "=>", spread)
-    print("min", self.min - u, "max", self.max + u)
-
-    iterable = updates
-    if len(updates) > Coordinate.range_distance(self.min - u, self.max + u):
-      iterable = Coordinate.range(self.min - u, self.max + u)
-
-    for p in iterable:
-      #adj = set(adj_func(p))
-      #count = len(adj.intersection(self.grid))
-      count = 0
-      for a in adj_func(p):
-        if a in self.grid:
-          count += 1
-      #updated[p] = active_func(self[p], count)
-      updated[p] = count == 3 or (self[p] and count == 2)
+    for point, count in alive.items():
+      # For all the alive points, set their alive status
+      updated[point] = count == 3 or (self[point] and count == 2)
 
     return updated
 

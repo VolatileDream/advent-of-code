@@ -3,6 +3,7 @@
 import argparse
 import collections
 import functools
+import itertools
 import re
 import sys
 import typing
@@ -24,6 +25,9 @@ def any_item(iterable, default=None):
 
 
 class Coordinate:
+
+  __dimension_deltas_cache__ = {}
+
   def __init__(self, dimensions):
     self.values = dimensions
     self.__hash = None
@@ -32,15 +36,25 @@ class Coordinate:
     return "Coordinate({})".format(", ".join([str(i) for i in self.values]))
 
   @staticmethod
-  def zero(length):
-    return Coordinate((0,) * length)
+  def deltas(dimensions):
+    cache = Coordinate.__dimension_deltas_cache__
+    cached = cache.get(dimensions, None)
+    if cached is None:
+      all_items = list(itertools.product((-1, 0, 1), repeat=dimensions))
+      all_items.remove((0,) * dimensions)
+      cache[dimensions]  = frozenset([Coordinate(c) for c in all_items])
+    return cache[dimensions]
+
+  @staticmethod
+  def zero(dimensions):
+    return Coordinate((0,) * dimensions)
 
   def get_zero(self):
     return Coordinate.zero(len(self))
 
   @staticmethod
-  def unit(length):
-    return Coordinate((1,) * length)
+  def unit(dimensions):
+    return Coordinate((1,) * dimensions)
 
   def get_unit(self):
     return Coordinate.unit(len(self))
@@ -77,38 +91,6 @@ class Coordinate:
       return self
     return self.__update__(max, other)
 
-  @staticmethod
-  def __r(lower, higher):
-    if len(lower) == 0:
-      yield tuple()
-      return
-    l, *lrest = lower
-    h, *hrest = higher
-
-    for v in range(l, h+1):
-      for r in Coordinate.__r(lrest, hrest):
-        yield (v,) + r
-
-  @staticmethod
-  def range(p1, p2):
-    lower = p1.min(p2)
-    higher = p1.max(p2)
-    assert lower == p1
-    assert higher == p2
-
-    for c in Coordinate.__r(lower.values, higher.values):
-      yield Coordinate(c)
-
-  @staticmethod
-  def range_distance(p1, p2):
-    # output len(range(p1, p2))
-    lower = p1.min(p2)
-    higher = p1.max(p2)
-    count = 1
-    for one, two in zip(lower.values, higher.values):
-      count *= two - one
-
-    return count
 
 # dict with keys limited to True & False
 class ConwayND:
@@ -142,15 +124,15 @@ class ConwayND:
     elif key in self.grid:
       self.grid.remove(key)
 
-  def step(self, adj_func):
+  def step(self):
     updated = ConwayND(self.clz)
 
     # Count the number of alive items beside every point
     alive = collections.defaultdict(int)
     for p in self.grid:
       alive[p] += 1
-      for a in adj_func(p):
-        alive[a] += 1
+      for d in Coordinate.deltas(len(p)):
+        alive[p + d] += 1
 
     for point, count in alive.items():
       # For all the alive points, set their alive status
@@ -169,20 +151,12 @@ def product(p):
   return o
 
 
-def adjacent(p):
-  u = p.get_unit()
-  for adj in p.range(p - u, p + u):
-    if adj == p:
-      continue
-    yield adj
-
-
 def part1(things):
   things = ConwayND.from_lines2(things, [0])
   for i in range(6):
     print("iteration", i)
     #print(repr(things))
-    things = things.step(adjacent)
+    things = things.step()
 
   return len(things.grid) 
 
@@ -192,7 +166,7 @@ def part2(things):
   for i in range(6):
     print("iteration", i)
     #print(repr(things))
-    things = things.step(adjacent)
+    things = things.step()
 
   return len(things.grid) 
 
@@ -200,8 +174,8 @@ def part2(things):
 def main(filename):
   things = load_file(filename)
 
-  print("adjacent", Coordinate.unit(3), len(list(adjacent(Coordinate.unit(3)))))
-  print("adjacent", Coordinate.unit(4), len(list(adjacent(Coordinate.unit(4)))))
+  print("adjacent", Coordinate.unit(3), len(Coordinate.deltas(3)))
+  print("adjacent", Coordinate.unit(4), len(Coordinate.deltas(4)))
 
   print("part 1:", part1(things))
   print("part 2:", part2(things))

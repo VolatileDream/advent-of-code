@@ -33,14 +33,14 @@ class Coordinate:
 
   @staticmethod
   def zero(length):
-    return Coordinate([0] * length)
+    return Coordinate((0,) * length)
 
   def get_zero(self):
     return Coordinate.zero(len(self))
 
   @staticmethod
   def unit(length):
-    return Coordinate([1] * length)
+    return Coordinate((1,) * length)
 
   def get_unit(self):
     return Coordinate.unit(len(self))
@@ -50,30 +50,13 @@ class Coordinate:
 
   def __update__(self, func, other):
     assert len(self) == len(other)
-    return Coordinate(list(map(func, zip(self.values, other.values))))
+    return Coordinate(tuple(map(func, zip(self.values, other.values))))
 
   def __hash__(self):
-    if self.__hash is None:
-      self.__hash = self.__compute_hash()
-    return self.__hash
-
-  def __compute_hash(self):
-    # Much of this reflects python's tuple hashing:
-    # https://github.com/python/cpython/blob/eb48a451e3844185b9a8751c9badffbddc89689d/Objects/tupleobject.c#L407
-    h = 2870177450012600261
-    # the hash attempts to capture the position of the items
-    for i, v in enumerate(self.values):
-      # cyclic shift, using 17 & 47 to go through all positions (eventually)
-      h += hash(v) * 14029467366897019727
-      h = 0xffffffffffffffff & ((h << 31) | (h >> 33))
-      h *= 11400714785074694791
-
-    h += len(self) ^ 2870177450012600261;
-
-    return h
+    return hash(self.values)
 
   def __neg__(self):
-    return Coordinate(list(map(lambda a: -a, self.values)))
+    return Coordinate(tuple(map(lambda a: -a, self.values)))
 
   def __sub__(self, other):
     return self.__update__(lambda a: a[0] - a[1], other)
@@ -82,12 +65,7 @@ class Coordinate:
     return self.__update__(lambda a: a[0] + a[1], other)
 
   def __eq__(self, other):
-    if len(self) != len(other):
-      return False
-    for s, o in zip(self.values, other.values):
-      if s != o:
-        return False
-    return True
+    return self.values == other.values
 
   def min(self, other):
     if other is None:
@@ -102,14 +80,14 @@ class Coordinate:
   @staticmethod
   def __r(lower, higher):
     if len(lower) == 0:
-      yield []
+      yield tuple()
       return
     l, *lrest = lower
     h, *hrest = higher
 
     for v in range(l, h+1):
       for r in Coordinate.__r(lrest, hrest):
-        yield [v] + r
+        yield (v,) + r
 
   @staticmethod
   def range(p1, p2):
@@ -146,16 +124,7 @@ class ConwayND:
     for y, l in enumerate(lines):
       for x, c in enumerate(l):
         if c == '#':
-          state[Coordinate([x, y] + ext)] = True
-    return state
-
-  @staticmethod
-  def from_lines(lines, CoordClass, **defaults):
-    state = ConwayND(CoordClass)
-    for y, l in enumerate(lines):
-      for x, c in enumerate(l):
-        if c == '#':
-          state[CoordClass(x=x, y=y, **defaults)] = True
+          state[Coordinate(tuple([x, y] + ext))] = True
     return state
 
   def __update_minmax__(self, key):

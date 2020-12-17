@@ -121,6 +121,16 @@ class Coordinate:
     for c in Coordinate.__r(lower.values, higher.values):
       yield Coordinate(c)
 
+  @staticmethod
+  def range_distance(p1, p2):
+    # output len(range(p1, p2))
+    lower = p1.min(p2)
+    higher = p1.max(p2)
+    count = 1
+    for one, two in zip(lower.values, higher.values):
+      count *= two - one
+
+    return count
 
 # dict with keys limited to True & False
 class ConwayND:
@@ -163,18 +173,49 @@ class ConwayND:
     elif key in self.grid:
       self.grid.remove(key)
 
-  def step(self, adj_func, active_func):
+  def step(self, adj_func):
     updated = ConwayND(self.clz)
     u = self.min.get_unit()
-    for p in self.clz.range(self.min - u, self.max + u):
-      adj = set(adj_func(p))
-      count = len(adj.intersection(self.grid))
-      updated[p] = active_func(self[p], count)
+
+    updates = set(self.grid)
+    # also add all the adjacent items in the set.
+    for p in self.grid:
+      for a in adj_func(p):
+        updates.add(a)
+
+    u = self.min.get_unit()
+    print("items", len(self.grid),
+          "updating", len(updates),
+          "instead of", Coordinate.range_distance(self.min - u, self.max + u))
+    spread = u + u + self.max - self.min
+    print("spread", product(spread), "=>", spread)
+    print("min", self.min - u, "max", self.max + u)
+
+    iterable = updates
+    if len(updates) > Coordinate.range_distance(self.min - u, self.max + u):
+      iterable = Coordinate.range(self.min - u, self.max + u)
+
+    for p in iterable:
+      #adj = set(adj_func(p))
+      #count = len(adj.intersection(self.grid))
+      count = 0
+      for a in adj_func(p):
+        if a in self.grid:
+          count += 1
+      #updated[p] = active_func(self[p], count)
+      updated[p] = count == 3 or (self[p] and count == 2)
 
     return updated
 
   def bounds(self):
     return (self.min, self.max)
+
+
+def product(p):
+  o = 1
+  for c in p.values:
+    o *= c
+  return o
 
 
 def adjacent(p):
@@ -185,20 +226,12 @@ def adjacent(p):
     yield adj
 
 
-def active(state, count):
-  # equivalent to:
-  # state and count in [2, 3] => True
-  # not state and count == 3 => True
-  # else => False
-  return count == 3 or (state and count == 2)
-
-
 def part1(things):
   things = ConwayND.from_lines2(things, [0])
   for i in range(6):
     print("iteration", i)
     #print(repr(things))
-    things = things.step(adjacent, active)
+    things = things.step(adjacent)
 
   return len(things.grid) 
 
@@ -208,13 +241,16 @@ def part2(things):
   for i in range(6):
     print("iteration", i)
     #print(repr(things))
-    things = things.step(adjacent, active)
+    things = things.step(adjacent)
 
   return len(things.grid) 
 
 
 def main(filename):
   things = load_file(filename)
+
+  print("adjacent", Coordinate.unit(3), len(list(adjacent(Coordinate.unit(3)))))
+  print("adjacent", Coordinate.unit(4), len(list(adjacent(Coordinate.unit(4)))))
 
   print("part 1:", part1(things))
   print("part 2:", part2(things))

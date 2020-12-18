@@ -151,24 +151,21 @@ def product(p):
   return o
 
 
-def part1(things):
-  things = ConwayND.from_lines2(things, [0])
-  for i in range(6):
+def run(things, dimensions, cycles=6):
+  things = ConwayND.from_lines2(things, [0] * (dimensions - 2))
+  for i in range(cycles):
     print("iteration", i)
-    #print(repr(things))
     things = things.step()
 
-  return len(things.grid) 
+  return len(things.grid)
+
+
+def part1(things):
+  return run(things, 3)
 
 
 def part2(things):
-  things = ConwayND.from_lines2(things, [0, 0])
-  for i in range(6):
-    print("iteration", i)
-    #print(repr(things))
-    things = things.step()
-
-  return len(things.grid) 
+  return run(things, 4)
 
 
 def main(filename):
@@ -179,6 +176,7 @@ def main(filename):
 
   print("part 1:", part1(things))
   print("part 2:", part2(things))
+  #print("6d, 4c:", run(things, dimensions=6, cycles=4))
 
 
 if __name__ == "__main__":

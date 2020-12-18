@@ -91,6 +91,28 @@ class Coordinate:
       return self
     return self.__update__(max, other)
 
+  @staticmethod
+  def __r(lower, higher):
+    if len(lower) == 0:
+      yield tuple()
+      return
+    l, *lrest = lower
+    h, *hrest = higher
+
+    for v in range(l, h+1):
+      for r in Coordinate.__r(lrest, hrest):
+        yield (v,) + r
+
+  @staticmethod
+  def range(p1, p2):
+    lower = p1.min(p2)
+    higher = p1.max(p2)
+    assert lower == p1
+    assert higher == p2
+
+    for c in Coordinate.__r(lower.values, higher.values):
+      yield Coordinate(c)
+
 
 # dict with keys limited to True & False
 class ConwayND:
@@ -107,7 +129,7 @@ class ConwayND:
       for x, c in enumerate(l):
         if c == '#':
           state[Coordinate(tuple([x, y] + ext))] = True
-    return state
+    return state.freeze()
 
   def __update_minmax__(self, key):
     # incremental
@@ -118,14 +140,26 @@ class ConwayND:
     return key in self.grid
 
   def __setitem__(self, key, value):
+    assert type(value) == bool
     if value:
       self.grid.add(key)
       self.__update_minmax__(key)
-    elif key in self.grid:
-      self.grid.remove(key)
+    # ignore updates that don't set Value to True.
+
+  def freeze(self):
+    self.grid = frozenset(self.grid)
+    return self
 
   def step(self):
     updated = ConwayND(self.clz)
+
+    # Extra optimization:
+    # Because we start with a 2D input, all other dimensions end up being symmetric.
+    # That is, if point (x, y, z, ...) is alive, then (x, y, -z, - ...) is too.
+    # you could in theory process half the point space using this (taking care to handle)
+    # (x, y, 0...) specially (all of it's alive counts would need to be doubled).
+    #
+    # This is not done below.
 
     # Count the number of alive items beside every point
     alive = collections.defaultdict(int)
@@ -138,7 +172,7 @@ class ConwayND:
       # For all the alive points, set their alive status
       updated[point] = count == 3 or (self[point] and count == 2)
 
-    return updated
+    return updated.freeze()
 
   def bounds(self):
     return (self.min, self.max)
@@ -151,11 +185,28 @@ def product(p):
   return o
 
 
+def flip_lastn(point):
+  # flip the sign of all but the first two indicies
+
+  # extract the tuple
+  t = point.values
+  last = t[2:]
+  flipped = tuple()
+  for l in last:
+    flipped += (-l,)
+  return Coordinate(t[:2] + flipped)
+
+
 def run(things, dimensions, cycles=6):
   things = ConwayND.from_lines2(things, [0] * (dimensions - 2))
   for i in range(cycles):
     print("iteration", i)
     things = things.step()
+
+  # compare the "up" and "down" layers
+  for point in things.grid:
+    opposite = flip_lastn(point)
+    assert opposite in things.grid
 
   return len(things.grid)
 

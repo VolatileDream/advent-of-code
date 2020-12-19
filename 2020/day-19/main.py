@@ -104,20 +104,34 @@ class MessageParser:
   def __gen_matches(self):
     # generate all matches.
     cache = {}
-    return (cache, MessageParser.__matching(cache, self.rules, 0))
+    # making the matching values into a set speeds up all contains checks.
+    # 200% worth it.
+    return (cache, frozenset(MessageParser.__matching(cache, self.rules, 0)))
 
-  def allmatching(self):
+  def gen_cache(self):
+    assert self.rules[0] == [(8, 11)]
+    assert self.rules[8] == [(42,)]
+    assert self.rules[11] == [(42, 31)]
+
     if self.matches is None:
       self.matches = self.__gen_matches()
-    return self.matches[1]
+
+  def count(self):
+    self.gen_cache()
+    return len(self.matches[1])
 
   def part2_match(self, value):
+    self.gen_cache()
     assert self.rules[0] == [(8, 11)]
     cache = self.matches[0]
-    rule42 = cache[42]
-    rule31 = cache[31]
+    rule42 = frozenset(cache[42])
+    rule31 = frozenset(cache[31])
+
+    # They have overlap.
+    #assert len(rule42.union(rule31)) == 0
 
     # The new 8 & 11 rules:
+    #
     # 8: 42 | 42 8
     # 11: 42 31 | 42 11 31
     #
@@ -141,28 +155,30 @@ class MessageParser:
       return chunked[0] in rule42 and chunked[1] in rule42 and chunked[2] in rule31
 
     # recall we are trying to match:
-    # 42 + 42 {n} 31 {n}
-    for c in range(1, len(chunked)):
-      n = (len(chunked) - c) // 2
-      if n * 2 + c != len(chunked):
-        continue
+    #
+    # 42+ 42{n} 31{n}
+    #
+    # Rule 11 looks like bracket matching, but because we have rule 8
+    # we can greedily match rule 42, and once we stop matching it, the rest
+    # must match rule 31. Then we return `matches-42 > matches-31`.
+    #
+    # we end up with:
+    #
+    # 42{x} 31{y} ; x > y
 
-      # check the first `c` items for being in 42.
-      # then the next `n` in 42, and the last `n` in 31.
-      #
-      # > c + n in 42, n in 31.
+    i = 0 # for 
+    for i in range(len(chunked)):
+      # i isn't shadowed, it updates
+      if chunked[i] not in rule42:
+        break
 
-      match = True
-      for i, v in enumerate(chunked):
-        if i < c + n:
-          match = match and v in rule42
-        else:
-          match = match and v in rule31
+    count42 = i
 
-      if match:
-        return True
+    for i in range(i, len(chunked)):
+      if chunked[i] not in rule31:
+        return False
 
-    return False
+    return count42 > len(chunked) - count42
 
 
 def parseit(things):
@@ -172,12 +188,10 @@ def parseit(things):
 def part1(things):
   parser, messages = things
 
-  matches = parser.allmatching()
-
   count = 0
   for m in messages:
     #print("checking", m)
-    if m in matches:
+    if m in parser.matches[1]:
       #print("matches!")
       count += 1
 
@@ -206,11 +220,12 @@ def part2(things):
 
   return count
 
+
 def main(filename):
   things = parseit(load_groups(filename))
 
-  print(things[0])
-  print(len(things[0].allmatching()))
+  #print(things[0])
+  print("matching strings (part 1):", things[0].count())
   print()
 
   print("part 1:", part1(things))

@@ -28,7 +28,7 @@ def load_groups(filename):
       acc = []
 
   if acc:
-    contents.append(line)
+    contents.append(acc)
 
   return contents
 

@@ -147,11 +147,22 @@ class Tile:
       out.append(''.join(line))
     return '\n'.join(out)
 
+  def unique_edges(self):
+    edges = set()
+    for transform in self.edges:
+      edges.update(self.edges[transform])
+
+    return edges
+
   def __edge_cache(self):
     cache = {}
 
     def rev(value):
-      return value[::-1]
+      rev = 0
+      while value > 0:
+        rev = (rev << 1) | (value & 1)
+        value = value >> 1
+      return rev
 
     def gen_rotations(orientation, top, right, bottom, left):
       rtop, rright, rbottom, rleft = (rev(top), rev(right), rev(bottom), rev(left))
@@ -167,7 +178,9 @@ class Tile:
     gen_rotations(Orientation.HORIZONTAL_FLIP, bottom, rright, top, rleft)
     gen_rotations(Orientation.VERTICAL_FLIP, rtop, left, rbottom, right)
     gen_rotations(Orientation.BOTH_FLIP, rbottom, rleft, rtop, rright)
-    
+   
+    # reduce cache items that are equivalent.
+ 
     return cache
 
   def __base_edges(self):
@@ -180,30 +193,30 @@ class Tile:
     # these are generated top to bottom, left to right
     for i in range(size):
       if Position(i, 0) in self.grid:
-        top.append("#")
+        top.append("1")
       else:
-        top.append(".")
+        top.append("0")
 
       if Position(end, i) in self.grid:
-        right.append("#")
+        right.append("1")
       else:
-        right.append(".")
+        right.append("0")
 
       if Position(i, end) in self.grid:
-        bottom.append("#")
+        bottom.append("1")
       else:
-        bottom.append(".")
+        bottom.append("0")
 
       if Position(0, i) in self.grid:
-        left.append("#")
+        left.append("1")
       else:
-        left.append(".")
+        left.append("0")
  
     top = ''.join(top)
     right = ''.join(right)
     bottom = ''.join(bottom)
     left = ''.join(left)
-    return [top, right, bottom, left]
+    return [int(top, 2), int(right, 2), int(bottom, 2), int(left, 2)]
 
   def __base_edges_values(self):
     top = []
@@ -256,6 +269,12 @@ class TileGrid:
   def __init__(self, tiles):
     self.tiles = tiles
     self.size = math.isqrt(len(tiles))
+
+  def unique_edges(self):
+    edges = set()
+    for t in self.tiles:
+      edges.update(t.unique_edges())
+    return edges
 
   def corners(self):
     end = self.size - 1
@@ -393,6 +412,8 @@ def main(filename):
   print(edges)
   edges = things.tiles[0].get_edges(Orientation.NO_FLIP, Rotation.ROT_270)
   print(edges)
+  print()
+  print("unique edges", len(things.unique_edges()))
   print()
 
   Rotation.test()

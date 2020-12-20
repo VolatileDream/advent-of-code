@@ -110,6 +110,12 @@ class Position(typing.NamedTuple):
   x: int
   y: int
 
+  def adjacent(self):
+    yield Position(self.x, self.y + 1)
+    yield Position(self.x, self.y - 1)
+    yield Position(self.x + 1, self.y)
+    yield Position(self.x - 1, self.y)
+
   def transform(self, o=Orientation.NO_FLIP, r=Rotation.NO_ROTATION):
     return o.transform_point(r.transform_point(self))
 
@@ -137,14 +143,27 @@ class Tile:
 
     # cache for rotation / transformation of edges
     self.edges = self.__edge_cache()
-    self.uedges = self.__unique_edges()
+    self.uedges = frozenset(self.__unique_edges())
+
+  def transform(self, o=Orientation.NO_FLIP, r=Rotation.NO_ROTATION):
+    new = set()
+    new_values = {}
+    for old_point in self.grid:
+      new_point = old_point.transform(o, r)
+      new.add(new_point)
+      new_values[new_point] = self.values[old_point]
+    return Tile(self.name, new, self.size, new_values)
 
   def __repr__(self):
     out = ["Tile {}:".format(self.name)]
-    for y in range(self.size):
+    for y in range(-self.size + 1, self.size):
       line = []
-      for x in range(self.size):
-        line.append(self.values[Position(x,y)])
+      for x in range(-self.size + 1, self.size):
+        if Position(x,y) in self.grid:
+          line.append("#")
+        else:
+          line.append(".")
+        #line.append(self.values[Position(x,y)])
       out.append(''.join(line))
     return '\n'.join(out)
 
@@ -184,8 +203,15 @@ class Tile:
     gen_rotations(Orientation.BOTH_FLIP, rbottom, rleft, rtop, rright)
    
     # reduce cache items that are equivalent.
+
+    c2 = {}
+    for key, value in cache.items():
+      t = tuple(value)
+      if t in c2:
+        continue
+      c2[t] = key
  
-    return cache
+    return { key: value for value, key in c2.items() }
 
   def __base_edges(self):
     top = []
@@ -255,14 +281,13 @@ class Tile:
     matchers = [build_matcher(e) for e in [etop, eright, ebottom, eleft]]
 
     possible_matches = []
-    for o in Orientation:
-      for r in Rotation:
-        matches = functools.reduce(lambda a,b: a and b,
-                                   map(lambda t: t[0](t[1]),
-                                       zip(matchers, self.get_edges(o, r))),
-                                   True)
-        if matches:
-          possible_matches.append((o, r))
+    for o, r in self.edges.keys():
+      matches = functools.reduce(lambda a,b: a and b,
+                                 map(lambda t: t[0](t[1]),
+                                     zip(matchers, self.get_edges(o, r))),
+                                 True)
+      if matches:
+        possible_matches.append((o, r))
     return possible_matches
 
   def get_edges(self, orientation, rotation):
@@ -286,6 +311,7 @@ class TileGrid:
         if e not in index:
           index[e] = set()
         index[e].add(i)
+        assert len(index[e]) <= 2, "found edge shared with more than two tiles {}".format(e)
 
     return index
 
@@ -294,6 +320,9 @@ class TileGrid:
     for t in self.tiles:
       edges.update(t.unique_edges())
     return edges
+
+  def tile_count(self):
+    return len(self.tiles)
 
   def corners(self):
     end = self.size - 1
@@ -401,48 +430,6 @@ class TileGrid:
     #print(indent, "no matches", position)
     return None
 
-  def __start_match(self, tried, used, existing_placement, position):
-    all_edges = self.unique_edges()
-
-    edge_count = {e: 0 for e in all_edges} # count number of tiles with this edge.
-    for t in self.tiles:
-      for e in t.unique_edges():
-        edge_count[e] += 1
-
-    shared_edge_count = { i: 0 for i in range(len(self.tiles)) }
-    for i, t in enumerate(self.tiles):
-      for e in t.unique_edges():
-        # edge_count has count 2 or more it means at least 2 tiles share the edge.
-        if edge_count[e] > 1:
-          shared_edge_count[i] += 1
-
-    min_shared = min(shared_edge_count.values())
-
-    #print(edge_count)
-    #print(shared_edge_count)
-    #print(min_shared)
-
-    corners = []
-    for index, count in shared_edge_count.items():
-      if count == min_shared:
-        corners.append(index)
-
-    print("min shared edges", min_shared, "corner tiles", corners)
-    # our corner tiles are going to be one of the tiles with fewest shared edges.
-
-    for i in corners:
-      for orientation in Orientation:
-        for rotation in Rotation:
-          placement = dict()
-          placement[Position(0, 0)] = (i, orientation, rotation)
-          used = set()
-          used.add(i)
-          result = self.__m(set(), used, placement, self.next_position(Position(0, 0)))
-          if result:
-            return result
-
-    return None
-
   def find_placement(self):
     # dict of Position(x, y) => (Tile index, Orientation, Rotation)
     placement = {}
@@ -460,34 +447,32 @@ def product(args):
     p *= a
   return p
 
+
 def part1(things):
   grid = things.find_placement()
-  print(grid)
-  print()
+  #print(grid)
+  #print()
   print(things.print_placement(grid))
   print()
 
   return product([things.tiles[grid[p][0]].name for p in things.corners()])
 
 def part2(things):
-  pass
+  grid = things.find_placement()
 
+  pass
 
 def main(filename):
   things = TileGrid.from_groups(load_groups(filename))
-  print(things.tiles[0])
-  print("tile count", things.size * things.size)
-  edges = things.tiles[0].get_edges(Orientation.NO_FLIP, Rotation.NO_ROTATION)
-  print(edges)
-  edges = things.tiles[0].get_edges(Orientation.NO_FLIP, Rotation.ROT_90)
-  print(edges)
-  edges = things.tiles[0].get_edges(Orientation.NO_FLIP, Rotation.ROT_180)
-  print(edges)
-  edges = things.tiles[0].get_edges(Orientation.NO_FLIP, Rotation.ROT_270)
-  print(edges)
-  print()
+  #print(things.tiles[0])
+  #print("tile count", things.size * things.size)
+  for o in Orientation:
+    for r in Rotation:
+      #print("Orientation & Rotation", o, r)
+      #print(things.tiles[0].transform(o, r))
+      pass
+  #print()
   print("unique edges", len(things.unique_edges()))
-  print()
 
   Rotation.test()
   Orientation.test()

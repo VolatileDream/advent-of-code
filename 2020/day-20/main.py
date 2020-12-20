@@ -156,9 +156,10 @@ class Tile:
 
   def __repr__(self):
     out = ["Tile {}:".format(self.name)]
-    for y in range(-self.size + 1, self.size):
+    start = 0 #-self.size + 1
+    for y in range(start, self.size):
       line = []
-      for x in range(-self.size + 1, self.size):
+      for x in range(start, self.size):
         if Position(x,y) in self.grid:
           line.append("#")
         else:
@@ -248,26 +249,6 @@ class Tile:
     left = ''.join(left)
     return [int(top, 2), int(right, 2), int(bottom, 2), int(left, 2)]
 
-  def __base_edges_values(self):
-    top = []
-    right = []
-    bottom = []
-    left = []
-    size = self.size
-    end = size - 1
-    # these are generated top to bottom, left to right
-    for i in range(size):
-      top.append(self.values[Position(i, 0)])
-      right.append(self.values[Position(end, i)])
-      bottom.append(self.values[Position(i, end)])
-      left.append(self.values[Position(0, i)])
- 
-    top = ''.join(top)
-    right = ''.join(right)
-    bottom = ''.join(bottom)
-    left = ''.join(left)
-    return [top, right, bottom, left]
-
   def matches_edges(self, edges):
     #print("set check", self.uedges, edges)
     return self.uedges.issuperset(edges)
@@ -293,6 +274,30 @@ class Tile:
   def get_edges(self, orientation, rotation):
     return self.edges[(orientation, rotation)]
 
+  def chop(self, orientation, rotation):
+    # top left coordinates, we want to move these to (0,0) later
+    new_grid = set()
+    tl_x, tl_y = any_item(self.grid).transform(orientation, rotation)
+    for old_point in self.grid:
+      new_point = old_point.transform(orientation, rotation)
+      tl_x = min(tl_x, new_point.x)
+      tl_y = min(tl_y, new_point.y)
+
+      new_grid.add(new_point)
+   
+    # now we translate everything by tl_*
+    new_grid = set([Position(p.x - tl_x, p.y - tl_y) for p in new_grid])
+
+    chopped = set()
+    for point in new_grid:
+      x, y = point
+      if x == 0 or x == self.size or y == 0 or y == self.size:
+        continue
+
+      chopped.add(Position(x - 1, y - 1))
+
+    return Tile(self.name, chopped, self.size - 2, None)
+        
 
 class TileGrid:
   @staticmethod
@@ -438,7 +443,32 @@ class TileGrid:
     # set of indicies used already
     used = set()
     return self.__m(tried, used, placement, Position(0, 0))
-    #return self.__start_match(tried, used, placement, Position(0, 0))
+
+  def convert_to_image(self, placement):
+    # index => Tile
+    chopped_tiles = {index : self.tiles[index].chop(o, r) for (index, o, r) in placement.values()}
+    tile_side_len = any_item(chopped_tiles.values()).size
+
+    position_index = {}
+    for position in placement:
+      position_index[position] = placement[position][0]
+
+    joined_grid = set()
+    for y in range(self.size):
+      for x in range(self.size):
+        p = Position(x, y)
+
+        tile = chopped_tiles[position_index[p]]
+        
+        for coord in tile.grid:
+          x_offset, y_offset = coord
+          joined_pos = Position(x * tile_side_len + x_offset, y * tile_side_len + y_offset)
+          joined_grid.add(joined_pos)
+
+        pass
+
+    return Tile('all', joined_grid, self.size * tile_side_len, None)
+    pass
 
 
 def product(args):
@@ -449,18 +479,22 @@ def product(args):
 
 
 def part1(things):
-  grid = things.find_placement()
+  grid, placement = things
   #print(grid)
   #print()
-  print(things.print_placement(grid))
+  print(grid.print_placement(placement))
   print()
 
-  return product([things.tiles[grid[p][0]].name for p in things.corners()])
+  return product([grid.tiles[placement[p][0]].name for p in grid.corners()])
+
 
 def part2(things):
-  grid = things.find_placement()
+  grid, placement = things
+
+  print(grid.convert_to_image(placement))
 
   pass
+
 
 def main(filename):
   things = TileGrid.from_groups(load_groups(filename))
@@ -477,6 +511,7 @@ def main(filename):
   Rotation.test()
   Orientation.test()
 
+  things = (things, things.find_placement())
   print("part 1:", part1(things))
   print("part 2:", part2(things))
 

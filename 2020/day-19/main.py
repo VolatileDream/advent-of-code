@@ -41,12 +41,15 @@ def any_item(iterable, default=None):
   return default
 
 
-# FROM: https://docs.python.org/3/library/itertools.html#itertools-recipes
-def grouper(iterable, n, fillvalue=None):
-    "Collect data into fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
-    return itertools.zip_longest(*args, fillvalue=fillvalue)
+def grouper(string, n):
+  l = len(string)
+  assert l % n == 0
+  out = []
+  for i in range(l // n):
+    offset = i * n
+    sub = string[offset:offset + n]
+    out.append(sub)
+  return out
 
 
 class MessageParser:
@@ -130,6 +133,14 @@ class MessageParser:
     del cache[8]
     del cache[11]
 
+    # We take advantage of this property as well.
+    # check it only once.
+    p = len(any_item(cache[42]))
+    for r in cache[42]:
+      assert p == len(r)
+    for r in cache[31]:
+      assert p == len(r)
+
     return (cache, matches)
 
   def gen_cache(self):
@@ -143,14 +154,7 @@ class MessageParser:
   def chunk_size(self):
     self.gen_cache()
     rule42 = self.matches[0][42]
-    rule31 = self.matches[0][31]
-    p = len(any_item(rule42))
-    for r in rule42:
-      assert p == len(r)
-    for r in rule31:
-      assert p == len(r)
-
-    return p
+    return len(any_item(rule42))
 
   def count(self):
     self.gen_cache()
@@ -187,7 +191,7 @@ class MessageParser:
     if len(value) % chunk_size != 0:
       return False
 
-    chunked = ["".join(g) for g in grouper(value, chunk_size)]
+    chunked = grouper(value, chunk_size)
     #print("chunked", chunked)
 
     # recall we are trying to match:

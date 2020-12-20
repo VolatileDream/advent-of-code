@@ -41,6 +41,20 @@ def any_item(iterable, default=None):
   return default
 
 
+# re-implement itertools.product to better handle our use case
+# only handles length 
+def specialized_product(*args):
+  l = len(args)
+  assert l == 1 or l == 2
+  if l == 1:
+    for a in args[0]:
+      yield a
+    return
+  for a in args[0]:
+    for b in args[1]:
+      yield a + b
+
+
 def grouper(string, n):
   l = len(string)
   assert l % n == 0
@@ -96,14 +110,15 @@ class MessageParser:
 
     # every rule is a list of matching things.
     matches = []
-    for subrule in rule:
+    for i, subrule in enumerate(rule):
       if type(subrule) == str:
+        #print("str match", "{}.{}".format(num, i), subrule, flush=True)
         matches.append(subrule)
       else:
         submatches = [MessageParser.__matching(cache, rules, r) for r in subrule]
-        #print("submatch", num, submatches, flush=True)
-        expanded = ["".join(t) for t in itertools.product(*submatches)]
-        #print("expanded", num, expanded, flush=True)
+        #print("submatch", "{}.{}".format(num, i), submatches, flush=True)
+        expanded = specialized_product(*submatches)
+        #print("expanded", "{}.{}".format(num, i), expanded, flush=True)
         matches.extend(expanded)
 
     #print("generated", num, "value", matches, "from", rules[num], flush=True)
@@ -113,25 +128,38 @@ class MessageParser:
   def __gen_matches(self):
     # generate all matches.
     cache = {}
-    # This evaluates almost everything, and these rules are needed later.
+    assert self.rules[0] == [(8, 11)]
     assert self.rules[8] == [(42,)]
     assert self.rules[11] == [(42, 31)]
-    # convert rules 42 and 31 into sets, because we perform a bunch of contains
-    # checks with those in particular.
+    # This evaluates almost everything, and these rules are needed later.
     MessageParser.__matching(cache, self.rules, 31)
     MessageParser.__matching(cache, self.rules, 42)
+    # convert rules 42 and 31 into sets, because we perform a bunch of contains
+    # checks with those in particular.
     cache[42] = frozenset(cache[42])
     cache[31] = frozenset(cache[31])
-    # making the matching values into a set speeds up all contains checks.
-    # 200% worth it.
-    matches = frozenset(MessageParser.__matching(cache, self.rules, 0))
 
-    # remove rules 0, 8, and 11 from the cache. They are changed in part 2
-    # and we don't want to accidentally rely on them for part 1.
-    assert self.rules[0] == [(8, 11)]
-    del cache[0]
-    del cache[8]
-    del cache[11]
+    matches = None
+    if False:
+      # Generating this takes a considerable amount of time, that's not worth it.
+      #
+      # 1) generating all the values for rule 0 is slow: ~330ms
+      # 2) converting the list to a set is slow: ~550ms
+      #
+      # Lookups in the set aren't slow, but amortized over construction time, it's not really worth it.
+      #
+      # Using the optimized 3 set lookup, we avoid ~880ms of overhead. See MessageParser.part1_match
+      #
+      # aside) not converting to a set and doing lookups is really slow: ~8s
+
+      MessageParser.__matching(cache, self.rules, 0)
+      matches = frozenset(cache[0])
+      #matches = cache[0]
+      # remove rules 0, 8, and 11 from the cache. They are changed in part 2
+      # and we don't want to accidentally rely on them for part 1.
+      del cache[0]
+      del cache[8]
+      del cache[11]
 
     # We take advantage of this property as well.
     # check it only once.
@@ -141,6 +169,8 @@ class MessageParser:
     for r in cache[31]:
       assert p == len(r)
 
+    # making the matching values into a set speeds up all contains checks.
+    # 200% worth it.
     return (cache, matches)
 
   def gen_cache(self):
@@ -158,15 +188,36 @@ class MessageParser:
 
   def count(self):
     self.gen_cache()
-    return len(self.matches[1])
+    c42 = self.matches[0][42]
+    c31 = self.matches[0][31]
+    return len(c42) * len(c42) * len(c31)
 
   def part1_match(self, value):
+    # This strategy is _much_ faster than evaluating all the strings that match rule 0
+    # and checking if the string we are passed is in that set.
     self.gen_cache()
-    return value in self.matches[1]
+
+    # were going to abuse the rule structure, 
+    # make sure it matches our expectations.
+    assert self.rules[0] == [(8, 11)]
+    assert self.rules[8] == [(42,)]
+    assert self.rules[11] == [(42, 31)]
+    rule31 = self.matches[0][31]
+    rule42 = self.matches[0][42]
+
+    chunk_size = self.chunk_size()
+    if len(value) % chunk_size != 0 or len(value) // chunk_size != 3:
+      return False
+
+    chunked = grouper(value, chunk_size)
+
+    # if you noticed above:
+    # rule 0 = 8 11
+    #        = 42 42 31
+    return chunked[0] in rule42 and chunked[1] in rule42 and chunked[2] in rule31
 
   def part2_match(self, value):
     self.gen_cache()
-    assert self.rules[0] == [(8, 11)]
     rule42 = self.matches[0][42]
     rule31 = self.matches[0][31]
 

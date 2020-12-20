@@ -163,7 +163,7 @@ class Tile:
 
     def rev(value):
       rev = 0
-      while value > 0:
+      for _ in range(self.size):
         rev = (rev << 1) | (value & 1)
         value = value >> 1
       return rev
@@ -241,6 +241,10 @@ class Tile:
     bottom = ''.join(bottom)
     left = ''.join(left)
     return [top, right, bottom, left]
+
+  def matches_edges(self, edges):
+    #print("set check", self.uedges, edges)
+    return self.uedges.issuperset(edges)
 
   def match_restriction(self, etop, eright, ebottom, eleft):
     def build_matcher(expect):
@@ -347,21 +351,32 @@ class TileGrid:
       return existing_placement
 
     if len(existing_placement) == 0:
-      #print()
+      print()
       pass
 
     next_pos = self.next_position(position)
     restriction = list(self.__get_restriction(existing_placement, position))
+    restriction_edges = [r for r in restriction if r]
 
     #print(indent, "trying", position, len(existing_placement))
     #print(indent, "restrictions:", restriction)
-    for i in range(len(self.tiles)):
-      if i in used:
+
+    possible = set(range(len(self.tiles))).difference(used)
+    for r in restriction_edges:
+      # restrictions are double use, ignore none entries.
+      possible = possible.intersection(self.tiles_by_edge[r])
+
+    #print(indent, "possible:", possible)
+
+    for i in possible:
+      tile = self.tiles[i]
+      name = tile.name
+
+      if not tile.matches_edges(restriction_edges):
+        #print(indent, "no edge match", name)
         continue
 
-      name = self.tiles[i].name
-
-      matching_placements = self.tiles[i].match_restriction(*restriction)
+      matching_placements = tile.match_restriction(*restriction)
       if len(matching_placements) == 0:
         #print(indent, "trying", position, "can't match", name, "into", restriction)
         continue
@@ -435,7 +450,8 @@ class TileGrid:
     tried = set()
     # set of indicies used already
     used = set()
-    return self.__start_match(tried, used, placement, Position(0, 0))
+    return self.__m(tried, used, placement, Position(0, 0))
+    #return self.__start_match(tried, used, placement, Position(0, 0))
 
 
 def product(args):

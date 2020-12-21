@@ -55,43 +55,39 @@ class Food:
     return "Food({}, {})".format(self.ingredients, self.allergens)
 
 
-def all_ingredients(ingredients):
+def all_ingredients(foods):
   out = set()
-  for i in ingredients:
+  for i in foods:
     out.update(i.ingredients)
   return out
 
 
-def all_allergens(ingredients):
+def all_allergens(foods):
   out = set()
-  for i in ingredients:
+  for i in foods:
     out.update(i.allergens)
   return out
 
 
-def find_allergens(ingredient_list):
-  # Find all the items with only 1 allergen,
-  # we know that one of the ingredients must be that allergen.
-  #
-  # For the rest of the items, go through and remove their ingredients
-  # (iff they don't contain the allergen).
-
-  ingredients = all_ingredients(ingredient_list)
-  allergens = all_allergens(ingredient_list)
+def find_allergens(foods):
+  # Generate sets of ingredients and allergens
+  ingredients = all_ingredients(foods)
+  allergens = all_allergens(foods)
+  # For each allergen, they could be any of the ingredients.
   allergen_options = { a: set(ingredients) for a in allergens }
 
   # map allergen => all items that contain it
   allergen_to_ingredients = collections.defaultdict(list)
-  for i in ingredient_list:
-    for a in i.allergens:
-      allergen_to_ingredients[a].append(i)
+  for f in foods:
+    for a in f.allergens:
+      allergen_to_ingredients[a].append(f)
 
-  for allergen, ingredients in allergen_to_ingredients.items():
-    for i in ingredients:
+  for allergen, fs in allergen_to_ingredients.items():
+    for food in fs:
       # this item must have the allergen in it.
       # that means that the allergen is in both allergen_options and i.ingredients
       # take the intersect to keep only those items in both.
-      allergen_options[allergen].intersection_update(i.ingredients)
+      allergen_options[allergen].intersection_update(food.ingredients)
 
   # some amount of the contents of allergen_to_ingredients have been
   # reduced to exactly a single item! This means we know what that allergen
@@ -112,38 +108,39 @@ def find_allergens(ingredient_list):
     for u in unreduced:
       allergen_options[u].difference_update(known_allergens)
 
-  return allergen_options
+  return { k: only_item(v) for k, v in allergen_options.items() }
 
 
-def part1(ingredient_list, allergen_options):
-  allergic_ingredients = set([only_item(a) for a in allergen_options.values()])
+def part1(foods, allergen_options):
+  allergic_ingredients = set(allergen_options.values())
   count = 0
-  for i in ingredient_list:
+  for f in foods:
     # count the number of ingredients that aren't known allergens
-    count += len(i.ingredients.difference(allergic_ingredients))
+    count += len(f.ingredients.difference(allergic_ingredients))
 
   return count
 
-def part2(ingredient_list, allergen_options):
+def part2(foods, allergen_options):
   allergens = list(allergen_options.keys())
   allergens.sort()
 
   print("canonical list", allergens)
-  return ','.join([only_item(allergen_options[a]) for a in allergens])
+  return ','.join([allergen_options[a] for a in allergens])
 
 
 def main(filename):
-  things = [Food.from_line(l) for l in load_file(filename)]
+  foods = [Food.from_line(l) for l in load_file(filename)]
 
   print("Food:")
-  for i in things:
-    print(i)
+  for i in foods:
+    #print(i)
+    pass
   print()
 
-  allergen_options = find_allergens(things)
+  allergen_options = find_allergens(foods)
 
-  print("part 1:", part1(things, allergen_options))
-  print("part 2:", part2(things, allergen_options))
+  print("part 1:", part1(foods, allergen_options))
+  print("part 2:", part2(foods, allergen_options))
 
 
 if __name__ == "__main__":

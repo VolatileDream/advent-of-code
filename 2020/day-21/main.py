@@ -54,16 +54,6 @@ class Ingredients:
   def __repr__(self):
     return "Ingredients({}, {})".format(self.ingredients, self.allergens)
 
-  def copy(self):
-    """Deep copy the Ingredients object"""
-    return Ingredients(set(self.ingredients), set(self.allergens))
-
-  def remove(self, ingredients, allergens):
-    """Returns a new Ingredients() with the passed in ingredients & allergens removed"""
-    return Ingredients(
-        self.ingredients.difference(ingredients),
-        self.allergens.difference(allergens))
-
 
 def all_ingredients(ingredients):
   out = set()

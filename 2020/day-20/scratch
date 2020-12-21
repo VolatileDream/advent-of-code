@@ -1,0 +1,74 @@
+We need to compare the sides consistently.
+
+0123456789  9876543210
+Z........A  A........Z
+Y...##...B  B...##...Y
+X.##.#...C  C...#.##.X
+W..##.##.D  D.##.##..W
+V....#.#.E  E.#.#....V
+U..#.#...F  F...#.#..U
+T.#....#.G  G.#....#.T
+S........H  H........S
+RQPONMLKJI  IJKLMNOPQR
+
+These two items are identical under rotation, we need to make sure that this is true.
+
+Since we read from left to right, top to bottom the left and bottom sides need to be generated in reverse.
+
+Then when rotating we need to to reverse items as we go.
+
+We expect:
+  ['0123456789', '9ABCDEFGHI', 'RQPONMLKJI', '0ZYXWVUTSR'] # normal
+>    reverse                     reverse
+  ['RSTUVWXYZ0', '0123456789', 'IHGFEDCBA9', 'RQPONMLKJI'] # 90
+>    reverse                     reverse     
+  ['IJKLMNOPQR', 'RSTUVWXYZ0', '9876543210', 'IHGFEDCBA9'] # 180
+>    reverse                     reverse     
+  ['9ABCDEFGHI', 'IJKLMNOPQR', '0ZYXWVUTSR', '9876543210'] # 270
+
+Here are the rotations:
+
+0123456789
+Z........A
+Y...##...B
+X.##.#...C
+W..##.##.D
+V....#.#.E
+U..#.#...F
+T.#....#.G
+S........H
+RQPONMLKJI
+
+RSTUVWXYZ0
+Q........1
+P.#...#..2
+O..#.##..3
+N....#.#.4
+M..##.##.5
+L....#...6
+K.#.##...7
+J........8
+IHGFEDCBA9
+
+IJKLMNOPQR
+H........S
+G...##...T
+F.##.#...U
+E..##.##.V
+D....#.#.W
+C..#.#...X
+B.#....#.Y
+A........Z
+9876543210
+
+9ABCDEFGHI
+8........J
+7...##...K
+6.##.#...L
+5..##.##.M
+4....#.#.N
+3..#.#...O
+2.#....#.P
+1........Q
+0ZYXWVUTSR
+

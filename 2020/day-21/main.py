@@ -39,20 +39,20 @@ def only_item(iterable):
     return i
 
 
-class Ingredients:
+class Food:
   @staticmethod
   def from_line(line):
     ingredients, allergens = line.split(" (contains ")
     ingredients = set(ingredients.split(" "))
     allergens = set(allergens.strip(")").split(", "))
-    return Ingredients(ingredients, allergens)
+    return Food(ingredients, allergens)
 
   def __init__(self, ingredients, allergens):
     self.ingredients = ingredients
     self.allergens = allergens
 
   def __repr__(self):
-    return "Ingredients({}, {})".format(self.ingredients, self.allergens)
+    return "Food({}, {})".format(self.ingredients, self.allergens)
 
 
 def all_ingredients(ingredients):
@@ -133,9 +133,9 @@ def part2(ingredient_list, allergen_options):
 
 
 def main(filename):
-  things = [Ingredients.from_line(l) for l in load_file(filename)]
+  things = [Food.from_line(l) for l in load_file(filename)]
 
-  print("Ingredients:")
+  print("Food:")
   for i in things:
     print(i)
   print()

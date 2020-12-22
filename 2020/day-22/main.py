@@ -71,10 +71,18 @@ class SpaceCardDeck:
 
   @staticmethod
   def play_combat(deck1, deck2):
+    previous_states = set()
+
     # outputs (deck1 after game, deck2 after game, pairs)
     deck1 = deck1.copy()
     deck2 = deck2.copy()
     while len(deck1) > 0 and len(deck2) > 0:
+      state = (deck1.state(), deck2.state())
+      if state in previous_states:
+        print("SpaceCardDeck.play_combat non terminating game")
+        return (deck1.subdeck(0), deck2.subdeck(0))
+      previous_states.add(state)
+
       c1 = deck1.draw()
       c2 = deck2.draw()
 
@@ -87,9 +95,8 @@ class SpaceCardDeck:
     return (deck1, deck2)
 
   @staticmethod
-  def play_recursive_combat(start1, start2, previous_states=None):
-    if previous_states is None:
-      previous_states = set()
+  def play_recursive_combat(start1, start2):
+    previous_states = set()
 
     deck1 = start1.copy()
     deck2 = start2.copy()
@@ -97,7 +104,7 @@ class SpaceCardDeck:
     while len(deck1) > 0 and len(deck2) > 0:
       state = (deck1.state(), deck2.state())
       if state in previous_states:
-        return (deck1, SpaceCardDeck(deck2.player, []))
+        return (deck1, deck2.subdeck(0))
       previous_states.add(state)
 
       c1 = deck1.draw()
@@ -144,7 +151,7 @@ def part2(things):
 def main(filename):
   things = [SpaceCardDeck.from_lines(g) for g in load_groups(filename)]
 
-  #print("part 1:", part1(things))
+  print("part 1:", part1(things))
   print("part 2:", part2(things))
 
 

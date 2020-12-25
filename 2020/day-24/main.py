@@ -188,6 +188,8 @@ class Grid:
       # incremental updates won't iterate through points that had no active neighbours.
       # and if these points were black tiles, then they should be flipped. uh oh.
       # there's a 'alive[p] += 0' line above that fixes this error.
+      # 
+      # but it really is better to just use the full rebuild loop above.
 
       # semi-incremental update
       updated = self.copy()

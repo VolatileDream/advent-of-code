@@ -47,6 +47,9 @@ def find_loopsize(target, subject):
 
 def transform(subject, loop):
   value = 1
+  # while you _can_ use exponents here, why make the numbers big?
+  # because python supports bignumbers, it'll do it...but then it
+  # gets sloooooooooooow.
   for _ in range(loop):
     value *= subject
     value = value % CRYPTO_PRIME

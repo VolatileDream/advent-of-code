@@ -39,21 +39,30 @@ def find_loopsize(target, subject):
   value = 1
   while value != target:
     acc += 1
-    value *= subject
-    value = value % CRYPTO_PRIME
+    value = (value * subject) % CRYPTO_PRIME
 
   return acc
 
 
-def transform(subject, loop):
-  value = 1
-  # while you _can_ use exponents here, why make the numbers big?
-  # because python supports bignumbers, it'll do it...but then it
-  # gets sloooooooooooow.
-  for _ in range(loop):
-    value *= subject
-    value = value % CRYPTO_PRIME
-  return value
+def transform(base, exponent):
+  # this uses square-and-multiply for fast exponentiation, because the
+  # "crypto" is just exponentiation.
+  #
+  # from wikipedia (https://en.wikipedia.org/wiki/Exponentiation_by_squaring):
+  #   (this doesn't handle negative exponents)
+  assert exponent >= 0, "Bad exponent"
+
+  value = base
+  carry = 1
+  while exponent > 1:
+    if exponent % 2 == 1:
+      carry = (carry * value) % CRYPTO_PRIME
+
+    value = (value * value) % CRYPTO_PRIME
+  
+    exponent = exponent >> 1
+
+  return (value * carry) % CRYPTO_PRIME
 
 
 def crypto():
@@ -68,8 +77,9 @@ def part1(things):
   card_loop = find_loopsize(card_public, 7)
   door_loop = find_loopsize(door_public, 7)
 
-  assert transform(7, card_loop) == card_public
-  assert transform(7, door_loop) == door_public
+  print("loop sizes", card_loop, door_loop)
+  #assert transform(7, card_loop) == card_public, "{} != {}".format(transform(7, card_loop), card_public)
+  #assert transform(7, door_loop) == door_public, "{} != {}".format(transform(7, door_loop), door_public)
 
   enc1 = transform(card_public, door_loop)
   enc2 = transform(door_public, card_loop)

@@ -32,7 +32,22 @@ def load_groups(filename):
 
   return contents
 
+
 CRYPTO_PRIME = 20201227
+
+def smaller_loopsize(target1, target2, base):
+  want = {target1, target2}
+  acc = 0
+  value = 1
+  while value not in want:
+    acc += 1
+    value = (value * base) % CRYPTO_PRIME
+
+  if value == target1:
+    return (acc, None)
+
+  return (None, acc)
+
 
 def find_loopsize(target, subject):
   acc = 0
@@ -65,27 +80,30 @@ def transform(base, exponent):
   return (value * carry) % CRYPTO_PRIME
 
 
-def crypto():
-  m = {}
-  card_public = transform(m, 7, 8)
-  door_public = transform(m, 7, 11)
-  return (card_public, door_public)
-
-
 def part1(things):
   card_public, door_public = things
-  card_loop = find_loopsize(card_public, 7)
-  door_loop = find_loopsize(door_public, 7)
+
+  # We can avoid computing both exponents because the encryption value can be
+  # derived from one public key, and the other exponent. This is significantly
+  # faster than attempting to compute both.
+  card_loop, door_loop = smaller_loopsize(card_public, door_public, 7)
+  #card_loop = find_loopsize(card_public, 7)
+  #door_loop = find_loopsize(door_public, 7)
 
   print("loop sizes", card_loop, door_loop)
   #assert transform(7, card_loop) == card_public, "{} != {}".format(transform(7, card_loop), card_public)
   #assert transform(7, door_loop) == door_public, "{} != {}".format(transform(7, door_loop), door_public)
 
-  enc1 = transform(card_public, door_loop)
-  enc2 = transform(door_public, card_loop)
-  assert enc1 == enc2
+  enc = None
 
-  return enc1
+  if door_loop:
+    enc = transform(card_public, door_loop)
+
+  if card_loop:
+    enc = transform(door_public, card_loop)
+
+  return enc
+
 
 def part2(things):
   pass

@@ -1,7 +1,6 @@
 #!/usr/bin/env python-mr
 
 from _.command_line.app import APP
-import _.games.advent_of_code.util as util
 
 
 def move1(pos, instr):
@@ -18,7 +17,7 @@ def move1(pos, instr):
   return (depth, horiz)
 
 
-def day1(instrs):
+def PART1(instrs):
   pos = (0, 0)
   for i in instrs:
     pos = move1(pos, i)
@@ -40,7 +39,7 @@ def move2(pos, instr):
   return (depth, horiz, aim)
 
 
-def day2(instrs):
+def PART2(instrs):
   pos = (0, 0, 0)
   for i in instrs:
     pos = move2(pos, i)
@@ -49,9 +48,10 @@ def day2(instrs):
 
 
 def main():
+  import _.games.advent_of_code.main as util
   instrs = util.load_input()
-  print(day1(instrs))
-  print(day2(instrs))
+  print(PART1(instrs))
+  print(PART2(instrs))
 
 
 if __name__ == "__main__":

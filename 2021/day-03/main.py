@@ -42,27 +42,27 @@ def PART1(values):
   return (to_int(gamma), to_int(epsilon), mul)
 
 
-def filter(values, keep_fn):
-  #print("Filtering...")
-  size = len(values[0])
+def count_set_pos(values, position):
+  return sum([int(v[position]) for v in values])
+
+
+def filter_gases(values, keep_fn):
+  width = len(values[0])
   candidates = list(values)
+
   index = 0
   while len(candidates) > 1:
-    bits_set = count_set(candidates)
-    #print("Candidates:", [to_int(c) for c in candidates])
-    candidates = [c for c in candidates if keep_fn(bits_set, index, c, len(candidates))]
-    index = (index + 1) % size
+    bits_set = count_set_pos(candidates, index)
+    halfsies = bits_set >= len(candidates) / 2
+    candidates = [c for c in candidates if keep_fn(c, index, halfsies)]
+    index = (index + 1) % width
   return candidates[0]
 
 
 def PART2(values):
-  size = len(values[0])
-  amount = len(values)
-  counts = count_set(values)
-
   # Compute O2
-  o2 = filter(values, lambda counts, index, c, a: c[index] == (counts[index] >= a / 2))
-  co2 = filter(values, lambda counts, index, c, a: c[index] == (counts[index] < a / 2))
+  o2 = filter_gases(values, lambda c, index, h: c[index] == h)
+  co2 = filter_gases(values, lambda c, index, h: c[index] != h)
 
   o2 = to_int(o2)
   co2 = to_int(co2)

@@ -42,7 +42,7 @@ def load_groups(filename=None):
   # because some files follow this format instead.
   contents = []
   acc = [] 
-  for line in load_file(filename):
+  for line in load_input(filename):
     if line:
       acc.append(line)
     else:

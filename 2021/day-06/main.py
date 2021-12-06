@@ -3,6 +3,33 @@
 from collections import defaultdict
 from _.data.formatting.blocks import Block
 
+# This is an example implementation that you could build based on the puzzle
+# description. It uses memory proportional to fish, and is very slow.
+class SlowSwarm:
+  @staticmethod
+  def from_list(days):
+    return SlowSwarm(days)
+  def __init__(self, days):
+    self._days = days
+  def count_fish(self):
+    return len(self._days)
+  def increment_days(self):
+    new = 0
+    next_state = []
+    for d in self._days:
+      if d == 0:
+        new += 1
+        next_state.append(6)
+      else:
+        next_state.append(d - 1)
+    next_state.extend([8] * new)
+    return SlowSwarm(next_state)
+
+
+# This is the better implementation, because the puzzles turns out not to
+# care about the ordering of the fish in the list. By using a dict, there is
+# constant memory usage (one entry per day in the fish lifecycle), and
+# computing the next state is O(lifecycle days) instead of O(fish).
 class LanternFishSwarm:
   @staticmethod
   def from_list(days):
@@ -40,6 +67,7 @@ LOAD = "content"
 def REWRITE(lines):
   state, = lines
   return LanternFishSwarm.from_list([int(i) for i in state.split(",")])
+  #return SlowSwarm.from_list([int(i) for i in state.split(",")])
 
 
 def PART1(inputs):

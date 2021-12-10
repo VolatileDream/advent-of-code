@@ -5,6 +5,7 @@ import inspect
 import importlib
 import os
 import re
+import subprocess
 import sys
 import typing
 
@@ -18,12 +19,20 @@ FLAG_year = Flag.int("year", short="Y")
 FLAG_day = Flag.int("day", short="D")
 
 
+ROOT = os.path.join(REPO_LOCATION, "games", "advent-of-code")
+
+
+def challenge_path():
+  year, day = str(FLAG_year.value), "day-{:02}".format(FLAG_day.value)
+  dirname = os.path.join(ROOT, year, day)
+  return dirname
+
+
 def load_input(filename=None):
   if not filename:
     filename = FLAG_input.value
   if not filename:
-    year, day = str(FLAG_year.value), "day-{:02}".format(FLAG_day.value)
-    dirname = os.path.join(REPO_LOCATION, "games", "advent-of-code", year, day)
+    dirname = challenge_path()
     if FLAG_test.value:
       filename = os.path.join(dirname, "test.txt")
     else:
@@ -78,6 +87,30 @@ class AdventRunner:
       return module.REWRITE
     return lambda x: x
 
+  def __edit(self):
+    dirname = challenge_path()
+    os.makedirs(dirname, mode=0o700, exist_ok=True)
+    main = os.path.join(dirname, "main.py")
+    try:
+      os.stat(main)
+    except:
+      subprocess.run(["cp", os.path.join(ROOT, "template.py"), main])
+      pass
+    
+    subprocess.run(["vim", main])
+
+  def __fetch_input(self):
+    dirname = challenge_path()
+    infile = os.path.join(dirname, "input.txt")
+    cookie = ""
+    with open(os.path.join(ROOT, "cookie.txt")) as f:
+      cookie = f.read()
+
+    url = "https://adventofcode.com/{}/day/{}/input".format(
+            str(FLAG_year.value), str(FLAG_day.value))
+    # For some reason http2 seems to have problems when inside python.
+    subprocess.run(["curl", "--http1.1", url, "--cookie", cookie, "-o", infile])
+
   def __main(self):
     module = find_module()
     m = importlib.import_module(module)
@@ -103,6 +136,8 @@ class AdventRunner:
       print("Part 2:", r2)
     
   def run(self):
+    APP.register_command("fetch", self.__fetch_input)
+    APP.register_command("edit", self.__edit)
     APP.run(self.__main)
 
 

@@ -87,7 +87,7 @@ class AdventRunner:
       return module.REWRITE
     return lambda x: x
 
-  def __edit(self):
+  def __setup(self):
     dirname = challenge_path()
     os.makedirs(dirname, mode=0o700, exist_ok=True)
     main = os.path.join(dirname, "main.py")
@@ -96,10 +96,14 @@ class AdventRunner:
     except:
       subprocess.run(["cp", os.path.join(ROOT, "template.py"), main])
       pass
-    
+
+  def __edit(self):
+    self.__setup()
+    main = os.path.join(challenge_path(), "main.py")
     subprocess.run(["vim", main])
 
   def __fetch_input(self):
+    self.__setup()
     dirname = challenge_path()
     infile = os.path.join(dirname, "input.txt")
     cookie = ""

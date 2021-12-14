@@ -5,6 +5,19 @@ import typing
 from collections import defaultdict
 from _.data.formatting.blocks import Block
 
+class Folder(typing.NamedTuple):
+  xs: list[int]
+  ys: list[int]
+
+  def folds(self, point):
+    x, y = point
+    for fx in self.xs:
+      x = fx - abs(x - fx)
+    for fy in self.ys:
+      y = fy - abs(y - fy)
+    return Point(x, y)
+
+
 class Point(typing.NamedTuple):
   x: int
   y: int
@@ -70,13 +83,13 @@ def biggest_coords(points):
 def print_points(points):
   x, y = biggest_coords(points)
   out = []
-  for col in range(x + 1):
+  for row in range(y + 1):
     line = []
-    for row in range(y + 1):
+    for col in range(x + 1):
       if Point(col, row) in points:
         line.append("#")
       else:
-        line.append(".")
+        line.append(" ")
     out.append("".join(line))
     print("".join(line))
 
@@ -92,7 +105,8 @@ def REWRITE(lines):
 
 def PART1(inputs):
   points, folds = inputs
-  print(inputs)
+  #print(inputs)
+  print(len(points))
 
   update = set([folds[0].reflect(p) for p in points])
   return len(update)
@@ -102,8 +116,14 @@ def PART2(inputs):
   points, folds = inputs
   print()
 
-  ps = points
-  for f in folds:
-    ps = set([f.reflect(p) for p in ps])
+  fs = Folder(xs=[f.x for f in folds if f.x], ys=[f.y for f in folds if f.y])
+
+  #ps = points
+  #for f in folds:
+  #  ps = set([f.reflect(p) for p in ps])
+
+  ps = set()
+  for p in points:
+    ps.add(fs.folds(p))
 
   print_points(ps)

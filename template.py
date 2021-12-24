@@ -1,6 +1,7 @@
 #!/usr/bin/env python-mr
 
 from collections import defaultdict
+from typing import NamedTuple
 from _.data.formatting.blocks import Block
 
 LOAD = "content"

@@ -145,6 +145,9 @@ class AdventRunner:
     APP.run(self.__main)
 
 
-if __name__ == "__main__":
+def m():
   ar = AdventRunner()
   ar.run()
+
+ 
+if __name__ == "__main__": m()

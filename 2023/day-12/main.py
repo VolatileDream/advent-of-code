@@ -110,7 +110,8 @@ def valid_opts2(bits, runs, memo=None, agg=""):
     return 1 # all ? = .
 
   if not rbits:
-    return len(rruns) == 0
+    memo[state] = int(len(rruns) == 0)
+    return memo[state]
 
   # rbits contains some number of # and at least 1 ?
 
@@ -118,7 +119,9 @@ def valid_opts2(bits, runs, memo=None, agg=""):
 
   o1 = rbits.replace("?", ".", 1)
   o2 = rbits.replace("?", "#", 1)
-  return valid_opts(o1, rruns, memo, agg) + valid_opts(o2, rruns, memo, agg)
+  r = valid_opts(o1, rruns, memo, agg) + valid_opts(o2, rruns, memo, agg)
+  memo[state] = r
+  return r
 
  
 def TEST(inputs):
@@ -167,7 +170,7 @@ def PART1(inputs):
     s += opts
 
   hit, miss = m["_hit"], m["_miss"]
-  print("cache", "hit", hit, "miss", miss, "=", hit / (hit + miss))
+  print("cache", "hit", hit, "miss", miss, "=", hit / (hit + miss), "size", len(m))
 
   return s
 

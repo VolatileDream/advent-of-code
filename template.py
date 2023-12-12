@@ -10,6 +10,8 @@ LOAD = "content"
 def REWRITE(lines):
   return lines
 
+def TEST(inputs):
+  pass
 
 def PART1(inputs):
   print(inputs)

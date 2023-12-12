@@ -126,6 +126,9 @@ class AdventRunner:
       data = [fn(r) for fn, r in zip(rewrite, raw)]
     else:
       data = rewrite(raw)
+
+    if hasattr(m, "TEST"):
+      m.TEST(data)
     
     if hasattr(m, "PART1"):
       r1 = m.PART1(data)

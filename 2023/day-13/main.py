@@ -82,7 +82,43 @@ def REWRITE(groups):
 def TEST(inputs):
   pass
 
+def bitsset(num):
+  count = 0
+  while num:
+    count += num & 0x1
+    num = num >> 1
+  return count
 
+# Someone pointed out that we can use "symmetry with X errors" for reflection.
+# And that this provides a constant memory solution for part 2.
+def symmetry(values, lo, hi, targeterrs):
+  if lo < 0 or hi >= len(values):
+    return targeterrs == 0
+
+  errs = bitsset(values[lo] ^ values[hi])
+  if targeterrs < errs:
+    return False
+
+  return symmetry(values, lo - 1, hi + 1, targeterrs - errs)
+
+def find_symmetry(rocks, horizontal, errs):
+  maxrows, maxcols = (0, 0)
+  vals = None
+  if horizontal:
+    maxrows, maxcols = rocks.size
+    vals = rocks.vals
+  else:
+    maxrows, maxcols = rocks.size[::-1]
+    vals = rocks.tvals
+
+  # Return a list for compat with the previous implementation.
+  for offset in range(1, maxrows):
+    if symmetry(vals, offset - 1, offset, errs):
+      return [offset]
+
+  return []
+
+# First implementation.
 def find_reflections(rocks: Rocks, horz):
   maxrows, maxcols = (0, 0)
   vals = None
@@ -116,7 +152,11 @@ def find_reflections(rocks: Rocks, horz):
 
 def score1(rocks):
   h = find_reflections(rocks, True)
+  h2 = find_symmetry(rocks, True, 0)
+  assert h == h2, f"{h} == {h2}"
   v = find_reflections(rocks, False)
+  v2 = find_symmetry(rocks, False, 0)
+  assert v == v2, f"{v} == {v2}"
   s = 0
   if h:
     s += h[0] * 100
@@ -142,9 +182,13 @@ def score2(rocks: Rocks):
     # the question only has us find a __single__ new reflection.
     s = 0
     if h2:
-      s += h2.pop() * 100
+      h2 = h2.pop()
+      s += h2 * 100
+      assert h2 == find_symmetry(rocks, True, 1)[0]
     if v2:
-      s += v2.pop() * 1
+      v2 = v2.pop()
+      s += v2 * 1
+      assert v2 == find_symmetry(rocks, False, 1)[0]
     return s
     
   return 0
@@ -160,14 +204,30 @@ def PART1(inputs):
     #print(Rocks.pvals(r.size[::-1], r.tvals))
     #v = find_reflections(r, False)
     #print(v)
-    s += score1(r)
+    #u = score1(r)
+    u = faster_score(r, 0)
+    #print(r, u)
+    s += u
 
   return s
+
+def faster_score(rocks, errs):
+  h = find_symmetry(rocks, True, errs)
+  v = find_symmetry(rocks, False, errs)
+  score = 0
+  if h:
+    score += h[0] * 100
+  if v:
+    score += v[0]
+  return score
+
 
 def PART2(inputs):
   s = 0
   for r in inputs:
-    u = score2(r)
+    #print(r)
+    u = faster_score(r, 1)
+    #u = score2(r)
     #print(r, u)
     s += u
   return s

@@ -153,6 +153,7 @@ def PART1(inputs):
 
 # Taken from: https://www.mathopenref.com/coordpolygonarea.html
 def polygone_area(points):
+  # Also known as the shoelace formula.
   assert len(points) > 1
   assert points[0] == points[-1]
   total = 0
@@ -162,6 +163,7 @@ def polygone_area(points):
   return int(math.fabs(total) // 2)
 
 def dig_perimeter(points):
+  # Partial application of Pick's theorem.
   assert len(points) > 1
   assert points[0] == points[-1]
   total = 0

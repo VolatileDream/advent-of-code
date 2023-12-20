@@ -82,7 +82,7 @@ def partvalue(v):
 
 def PART1(inputs):
   tests, values = inputs
-  print(len(tests), len(values))
+  #print(len(tests), len(values))
 
   process = defaultdict(list)
   process["in"] = list(values)
@@ -102,7 +102,7 @@ def PART1(inputs):
         n = test.test(v)
         process[n].append(v)
 
-  print(process["A"])
+  #print(process["A"])
   return sum(map(partvalue, process["A"])) 
 
 def rangevalue(v):
@@ -187,5 +187,5 @@ def PART2(inputs):
         if v:
           process[n].append(v)
 
-  print(process["A"])
+  #print(process["A"])
   return sum(map(rangevalue, process["A"])) 

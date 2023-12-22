@@ -366,14 +366,14 @@ def PART2(inputs):
   # here is the ridiculous solution that some other folks came to, by doing
   # polynomial extrapolation. wtf?!
 
-  r1 = stepforward(g, [start], cycleOffset)
-  r2 = stepforward(g, r1, cycleLen)
-  r3 = stepforward(g, r2, cycleLen)
+  #r1 = stepforward(g, [start], cycleOffset)
+  #r2 = stepforward(g, r1, cycleLen)
+  #r3 = stepforward(g, r2, cycleLen)
   #r4 = stepforward(g, r3, cycleLen)
 
-  p0 = len(r1)
-  p1 = len(r2) - len(r1)
-  p2 = len(r3) - len(r2)
+  #p0 = len(r1)
+  #p1 = len(r2) - len(r1)
+  #p2 = len(r3) - len(r2)
   #p3 = len(r4) - len(r3)
   #print(len(r1), len(r2), len(r3), len(r4))
   #print(p0, p1, p2, p3)
@@ -385,7 +385,7 @@ def PART2(inputs):
 
   # compute sum from (1..x) but for the cycle.
   # this assumes the expansion is linear.
-  return p0 + (p1 * cycles) + (p2 - p1) * (cycles) * (cycles - 1) / 2
+  #return p0 + (p1 * cycles) + (p2 - p1) * (cycles) * (cycles - 1) / 2
 
   # This is the solution I came to, it is outlined in this [1] post, and I got
   # some of the math wrong at the beginning. :( ouch, it hurts. I managed to
@@ -414,12 +414,16 @@ def PART2(inputs):
   edges = [Point(start.x, 0), Point(start.x, g.cols - 1), Point(0, start.y), Point(g.rows - 1, start.y)]
   orthogonals = []
   for p in edges:
-    reach = partition_grid_cells(g, stepforward(grid, [p], cycleLen))[Point(0,0)]
+    # -1 because it reaches that position after 1 step.
+    reach = partition_grid_cells(g, stepforward(grid, [p], cycleLen - 1))[Point(0,0)]
     orthogonals.append(len(reach))
+  
+  #orth = partition_grid_cells(g, stepforward(g, [start], cycleLen + cycleOffset))
+  #assert sum(orthogonals) == sum([len(orth[p]) for p in DIRECTIONS.values()])
 
   # Hypothesis: two kinds of diagonal.
-  # * ones that cover all but the corner,
-  # * ones that only cover the corner.
+  # * ones that cover all but one corner,
+  # * ones that only cover one corner.
   #
   # The first kind are 65 steps forward of the existing diagonals.
   # The second appear as we step the first kind forward 65 steps,
@@ -430,12 +434,14 @@ def PART2(inputs):
   newDiagonalCounts = []
   for p in corners:
     reach = reachable(g, p, cycleOffset - 1)
+    #assert reach == stepforward(g, [p], cycleOffset - 1)
     reach = partition_grid_cells(g, reach)[Point(0, 0)]
     newDiagonalCounts.append(len(reach))
 
   coreDiagonals = []
   for p in corners:
-    r = stepforward(g, [p], cycleLen + cycleOffset)
+    r = stepforward(g, [p], cycleLen + cycleOffset - 1)
+    #assert r == reachable(g, p, cycleLen + cycleOffset)
     r = partition_grid_cells(g, r)[Point(0, 0)]
     coreDiagonals.append(len(r))
       
@@ -443,9 +449,6 @@ def PART2(inputs):
   #diagonalCount = (ringCells - 4) // 4
   # assertion from reddit.
   #assert diagonalCount + 1 == cycles, f"{diagonalCount} + 1 == {cycles}"
-  # Correction from reddit:
-  offCenterCount = (cycles - 1) ** 2
-  onCenterCount = (cycles) ** 2
   #assert fullCells == oddCenterCount + evenCenterCount, f"{fullCells} == {oddCenterCount} + {evenCenterCount}"
   # Attempt 1: 615789441023276 - too low. :(
   #  Maybe it's an off by one?
@@ -458,8 +461,8 @@ def PART2(inputs):
   # Attempt 4: 618267545511408 - also wrong. :(
 
   answer = (0
-      + (cycles ** 2) * len(centerOnCycle)
-      + ((cycles - 1) ** 2) * len(centerOffCycle)
+      + ((cycles - 1) ** 2) * len(centerOnCycle)
+      + ((cycles - 0) ** 2) * len(centerOffCycle)
       + (cycles - 1) * sum(coreDiagonals)
       + (cycles) * sum(newDiagonalCounts)
       + sum(orthogonals)

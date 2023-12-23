@@ -81,8 +81,10 @@ def segment_compress(grid):
   # Collapse long runs of single options into a larger weight.
 
   # Point -> Point -> cost
+  # Cost to go from point A to point B.
   costed = defaultdict(dict)
 
+  # Create an initial cost map, all moves have cost 1.
   for pos in grid:
     if grid_rock(grid, pos):
       continue
@@ -99,19 +101,20 @@ def segment_compress(grid):
   process = set(costed.keys())
   while process:
     # Pick a random point in the grid we haven't seen.
-    # It's in a segment if it only has 2 neighbours.
+    # It's in a collapsible segment if it only has 2 neighbours.
     # The segment ends when one of the ends has more than two neighbours.
     node = process.pop()
 
     neighbours = costed[node]
     if len(neighbours) != 2:
       continue
-    #print("rm", node, grid[node], neighbours)
-    #print(">", list(adjacent(grid, node)))
 
     n1, n2 = neighbours
-    #print(n1, costed[n1])
-    #print(n2, costed[n2])
+    # This could also be used to handle ice rules, if you make those
+    # special nodes that must also be kept (ie: they can't be collapsed
+    # into a segment).
+    #> if grid[n1] != "." or grid[n2] != "." or grid[node] != ".":
+    #>   continue
     costed[n1][n2] = costed[n1][node] + costed[node][n2]
     costed[n2][n1] = costed[n2][node] + costed[node][n1]
     del costed[n1][node]
@@ -121,10 +124,10 @@ def segment_compress(grid):
   for node in costed:
     for n in costed[node]:
       assert costed[n][node] == costed[node][n]
+      assert node != n
 
   #print(costed)
   return costed
-
 
 def bfs(compressed, start, end):
   # BFS won't work because of the cycles in the graph.
@@ -136,7 +139,7 @@ def bfs(compressed, start, end):
   distances[start] = 0
 
   while process:
-    print([(p, distances[p]) for p in process])
+    #print([(p, distances[p]) for p in process])
     node = process.pop(0)
     processing.remove(node)
     seen.add(node)
@@ -158,21 +161,39 @@ def bfs(compressed, start, end):
     if sort:
       process.sort(key=lambda n: distances[n], reverse=True)
 
-def compress_dfs(compressed, node, end, seen):
+def compress_dfs(grid, compressed, node, end, seen):
   if node == end:
-    return 0
+    # Note that only successful paths have the array, all others
+    # only pass around None values. 
+    return (0, [end])
 
   assert node not in seen, f"found {node} in {seen}"
   seen.add(node)
 
-  mPath = 0
-  for o in compressed[node]:
+  mCost = 0
+  mPath = None
+  options = compressed[node]
+  # If we wanted to process Slippery Ice rules we could do so.
+  # So long as the cost matrix was correctly generated for it.
+  #> if grid[node] != ".":
+  #>   options = [node + DIRECTIONS[grid[node]]]
+  for o in options:
     if o in seen:
       continue
-    mPath = max(mPath, compressed[node][o] + compress_dfs(compressed, o, end, seen))
+    cost, path = compress_dfs(grid, compressed, o, end, seen)
+    # Need to make sure this makes it to the end, not just that it's a long path.
+    if not path:
+      continue
+    if mCost < compressed[node][o] + cost:
+      mCost = compressed[node][o] + cost
+      mPath = path
 
   seen.remove(node)
-  return mPath
+  # Only successful paths get the overhead of array manipulation.
+  # It could be converted to a boolean...
+  if mPath:
+    mPath.append(node)
+  return (mCost, mPath)
 
 def PART2(inputs):
   size, grid = inputs
@@ -182,16 +203,34 @@ def PART2(inputs):
 
   compressed = segment_compress(grid)
   print("decision points:", len(compressed))
-  #print(dfs(grid, start, list(compressed[start])[0], set()))
-  #print(compressed[start])
-  #print(dfs(grid, end, list(compressed[end])[0], set()))
-  #print(compressed[end])
   for c in compressed:
-    print(c, compressed[c])
+    #print(c, compressed[c])
+    #print(c)
+    pass
+
+  # Find the intersections...
+  # intersection finding won't correctly see the start & end.
+  # But they are in the segment_compressed output.
+  intersections = set([start, end])
+  for row in range(size[0]):
+    for col in range(size[1]):
+      p = Point(row, col)
+      if grid_rock(grid, p):
+        continue
+      if len(adjacent(grid, p)) > 2:
+        intersections.add(p)
+        #print(">", p)
+
+  for c in compressed:
+    assert c in intersections
+    intersections.discard(c)
+  assert len(intersections) == 0
 
   # Attempt 1: 2946 - too low
   # Switch to exhaustive depth first search.
   # Attempt 2: 6921 - too high
-  # Oh, w
-  #return bfs(compressed, start, end)
-  return compress_dfs(compressed, start, end, set())
+  # Hmm. Gonna retrofit the part2 to part1, and see if it works for that.
+  # It does, and it gives the same answer as part1 does. :|
+  # Change DFS to actually check it successfully made it to the end, not
+  # just that it took a really long walk.
+  return compress_dfs(grid, compressed, start, end, set())

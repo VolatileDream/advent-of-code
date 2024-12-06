@@ -15,16 +15,21 @@ from _.repo.python.location import REPO_LOCATION
 
 FLAG_input = Flag.str("input", short="i", description="Puzzle input file.")
 FLAG_test = Flag.bool("test", description="Use test input instead of real input.")
-FLAG_year = Flag.int("year", short="Y")
-FLAG_day = Flag.int("day", short="D")
+FLAG_year = Flag.int("year", short="Y", default=-1)
+FLAG_day = Flag.int("day", short="D", default=-1)
 
 
 ROOT = os.path.join(REPO_LOCATION, "games", "advent-of-code")
 
-
 def challenge_path():
-  year, day = str(FLAG_year.value), "day-{:02}".format(FLAG_day.value)
-  dirname = os.path.join(ROOT, year, day)
+  year = FLAG_year.value
+  if year == -1:
+    year = int(os.getenv("ADVENT_YEAR"))
+
+  day = FLAG_day.value
+  if day == -1:
+    day = int(os.getenv("ADVENT_DAY"))
+  dirname = os.path.join(ROOT, str(year), "day-{:02}".format(day))
   return dirname
 
 
@@ -66,7 +71,12 @@ def load_groups(filename=None):
 
 def find_module():
   year = FLAG_year.value
+  if year == -1:
+    year = int(os.getenv("ADVENT_YEAR"))
+
   day = FLAG_day.value
+  if day == -1:
+    day = int(os.getenv("ADVENT_DAY"))
   return "_.games.advent_of_code.{}.day-{:02}.main".format(year, day)
 
 
@@ -100,7 +110,10 @@ class AdventRunner:
   def __edit(self):
     self.__setup()
     main = os.path.join(challenge_path(), "main.py")
-    subprocess.run(["vim", main])
+    env = os.environ.copy()
+    env["ADVENT_YEAR"] = str(FLAG_year.value)
+    env["ADVENT_DAY"] = str(FLAG_day.value)
+    subprocess.run(["vim", main], env=env)
 
   def __fetch_input(self):
     self.__setup()

@@ -46,6 +46,7 @@ OPERATORS = [
   concatenate,
 ]
 
+# This solution takes ~9s, mostly because we optimized concat.
 def domath(target, nums, operations):
   ops = len(nums) - 1
   count = 0
@@ -81,6 +82,56 @@ def PART2(inputs):
   count = 0
   for target, nums in inputs:
     if domath(target, nums, [0,1,2]) > 0:
+      count += target
+
+  # 227921760109726
+  return count
+
+# going faster...in reverse!
+def reverseconcat(num, r):
+  d = 0
+  m = 0
+  if r < 10:
+    d, m = divmod(num, 10)
+  elif r < 100:
+    d, m = divmod(num, 100)
+  elif r < 1000:
+    d, m = divmod(num, 1000)
+  else:
+    raise Exception(f"bad denominator {r}")
+
+  if m != r:
+    return False
+  return d
+
+def divide(num, r):
+  d, m = divmod(num, r)
+  if m != 0:
+    return False
+  return d
+
+def subtract(num, r):
+  return num - r
+
+# This is solution takes ~250ms.
+def backmath(target, nums):
+  if len(nums) <= 1:
+    return target == nums[0]
+
+  nextnums = nums[1:]
+
+  for op in (subtract, divide, reverseconcat):
+    result = op(target, nums[0])
+    if result is not False:
+      if backmath(result, nextnums):
+        return True
+
+  return False
+
+def PART2(inputs):
+  count = 0
+  for target, nums in inputs:
+    if backmath(target, nums[::-1]):
       count += target
 
   # 227921760109726

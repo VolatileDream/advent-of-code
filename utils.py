@@ -1,6 +1,8 @@
 import re
 import math
 
+from _.data.structures.point import Point, ZERO
+
 __Digits = re.compile("-?\d+")
 
 def read_numbers(line, kind=int):
@@ -103,4 +105,30 @@ def factors(number):
 
   assert number == 1
   return factors
+
+def to_grid(lines, discard=""):
+  # Check square.
+  assert(len(lines) == len(lines[0]))
+
+  grid = {}
+  for y, line in enumerate(lines):
+    for x, c in enumerate(line):
+      if c not in discard:
+        grid[Point(x,y)] = c
+
+  return (grid, len(lines))
+
+def grid_display(size, lookup, default=" "):
+  assert(len(default) == 1)
+  lines = []
+  for y in range(size):
+    line = ""
+    for x in range(size):
+      p = Point(x, y)
+      c = lookup(p)
+      if not c:
+        c = default
+      line += c
+    lines.append(line)
+  return "\n".join(lines)
 

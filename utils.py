@@ -106,7 +106,7 @@ def factors(number):
   assert number == 1
   return factors
 
-def to_grid(lines, discard=""):
+def to_grid(lines, discard="", transform=lambda x: x):
   # Check square.
   assert(len(lines) == len(lines[0]))
 
@@ -114,7 +114,7 @@ def to_grid(lines, discard=""):
   for y, line in enumerate(lines):
     for x, c in enumerate(line):
       if c not in discard:
-        grid[Point(x,y)] = c
+        grid[Point(x,y)] = transform(c)
 
   return (grid, len(lines))
 
